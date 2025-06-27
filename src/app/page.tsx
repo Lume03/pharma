@@ -17,9 +17,11 @@ export default function Home() {
   const [appState, setAppState] = useState<AppState>('idle');
   const [processedInvoices, setProcessedInvoices] = useState<ProcessedInvoice[] | null>(null);
   const [invoiceHistory, setInvoiceHistory] = useState<InvoiceHistoryItem[]>([]);
+  const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
+    setIsClient(true);
     try {
       const storedHistory = localStorage.getItem('invoiceHistory');
       if (storedHistory) {
@@ -157,7 +159,7 @@ export default function Home() {
               </p>
             </div>
             <InvoiceUpload onProcess={handleProcessInvoice} />
-            {invoiceHistory.length > 0 && (
+            {isClient && invoiceHistory.length > 0 && (
                 <div className="mt-6 text-center">
                     <Button variant="ghost" onClick={handleShowHistory}>
                         <History className="mr-2 h-4 w-4" />
