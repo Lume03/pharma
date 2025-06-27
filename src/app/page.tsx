@@ -25,10 +25,23 @@ export default function Home() {
     try {
       const storedHistory = localStorage.getItem('invoiceHistory');
       if (storedHistory) {
-        setInvoiceHistory(JSON.parse(storedHistory));
+        const parsedHistory = JSON.parse(storedHistory);
+        if (Array.isArray(parsedHistory)) {
+          // Filter out items that don't have a valid `invoices` array.
+          // This handles cases where old data structures might be in localStorage.
+          const validHistory = parsedHistory.filter(
+            (item): item is InvoiceHistoryItem => item && Array.isArray(item.invoices)
+          );
+          setInvoiceHistory(validHistory);
+          // Optional: update localStorage with the cleaned data
+          if (validHistory.length !== parsedHistory.length) {
+            localStorage.setItem('invoiceHistory', JSON.stringify(validHistory));
+          }
+        }
       }
     } catch (error) {
-      console.error("Failed to parse invoice history from localStorage", error);
+      console.error("Error al analizar el historial de facturas desde localStorage", error);
+      // If parsing fails, it's safer to just clear the corrupted data.
       localStorage.removeItem('invoiceHistory');
     }
   }, []);
