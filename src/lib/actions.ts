@@ -1,57 +1,66 @@
 'use server';
 
-import { extractInvoiceData, type ExtractInvoiceDataOutput } from '@/ai/flows/extract-invoice-data';
-import { validateExtractedData, type ValidateExtractedDataOutput } from '@/ai/flows/validate-extracted-data';
-import type { InvoiceData, ValidationError } from '@/types';
+import { extractInvoiceData } from '@/ai/flows/extract-invoice-data';
+import { validateExtractedData } from '@/ai/flows/validate-extracted-data';
+import type { ProcessedInvoice } from '@/types';
 
 interface ActionResult {
-  data: InvoiceData | null;
-  errors: ValidationError[] | null;
+  processedInvoices: ProcessedInvoice[] | null;
   errorMessage: string | null;
 }
 
 export async function extractAndValidateInvoiceAction(invoiceDataUri: string): Promise<ActionResult> {
   if (!invoiceDataUri) {
-    return { data: null, errors: null, errorMessage: 'No se proporcionó ningún archivo de factura.' };
+    return { processedInvoices: null, errorMessage: 'No se proporcionó ningún archivo de factura.' };
   }
 
   try {
     // 1. Extract data from the invoice PDF
-    const extractedData = await extractInvoiceData({ invoiceDataUri });
+    const extractionResult = await extractInvoiceData({ invoiceDataUri });
 
-    // 2. Prepare data for validation by mapping to the expected schema
-    const validationInput = {
-      supplier: extractedData.proveedor,
-      invoiceNumber: extractedData.numeroDeFactura,
-      invoiceDate: extractedData.fechaDeEmision,
-      products: extractedData.productos.map(p => ({
-        productName: p.nombreDelProductoFarmaceutico,
-        medicalDeviceName: p.nombreDelDispositivoMedico || '',
-        form: p.formaFarmaceutica,
-        lotNumber: p.numeroDeLote,
-        concentration: p.concentracion,
-        presentation: p.presentacion,
-        expirationDate: p.fechaDeVencimiento,
-        registrationNumber: p.registroSanitario || '',
-        quantityReceived: String(p.cantidadRecibida),
-      })),
-    };
+    if (!extractionResult?.invoices || extractionResult.invoices.length === 0) {
+      return { processedInvoices: null, errorMessage: 'No se pudo extraer ninguna factura del documento. Inténtelo de nuevo o con otro archivo.' };
+    }
 
-    // 3. Validate the extracted data
-    const validationResult = await validateExtractedData(validationInput);
+    const processedInvoices: ProcessedInvoice[] = [];
 
-    // 4. Return both extracted data and validation errors
+    // 2. Validate each extracted invoice
+    for (const invoice of extractionResult.invoices) {
+        const validationInput = {
+            supplier: invoice.proveedor,
+            invoiceNumber: invoice.numeroDeFactura,
+            invoiceDate: invoice.fechaDeEmision,
+            products: invoice.productos.map(p => ({
+                productName: p.nombreDelProductoFarmaceutico,
+                medicalDeviceName: p.nombreDelDispositivoMedico || '',
+                form: p.formaFarmaceutica,
+                lotNumber: p.numeroDeLote,
+                concentration: p.concentracion,
+                presentation: p.presentacion,
+                expirationDate: p.fechaDeVencimiento,
+                registrationNumber: p.registroSanitario || '',
+                quantityReceived: String(p.cantidadRecibida),
+            })),
+        };
+
+        const validationResult = await validateExtractedData(validationInput);
+        
+        processedInvoices.push({
+            data: invoice,
+            errors: validationResult.validationErrors,
+        });
+    }
+
+    // 3. Return all processed invoices
     return {
-      data: extractedData,
-      errors: validationResult.validationErrors,
+      processedInvoices,
       errorMessage: null,
     };
   } catch (error) {
     console.error('Error during AI processing:', error);
     const errorMessage = error instanceof Error ? error.message : 'Ocurrió un error desconocido.';
     return { 
-        data: null, 
-        errors: null, 
+        processedInvoices: null, 
         errorMessage: `No se pudo procesar la factura. Es posible que el modelo de IA haya tenido problemas con este formato de archivo. Detalles: ${errorMessage}` 
     };
   }

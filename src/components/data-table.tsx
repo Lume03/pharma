@@ -9,14 +9,13 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Download, AlertCircle, RefreshCcw } from 'lucide-react';
+import { Download, AlertCircle } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 interface DataTableProps {
   initialData: InvoiceData;
   initialValidationErrors: ValidationError[];
-  onStartOver: () => void;
 }
 
 const keyMap: { [K in keyof Omit<Product, 'envaseInmediato' | 'envaseMediato' | 'condicionesDeAlmacenamiento' | 'observaciones'>]: string } = {
@@ -31,7 +30,7 @@ const keyMap: { [K in keyof Omit<Product, 'envaseInmediato' | 'envaseMediato' | 
   cantidadRecibida: 'quantityReceived',
 };
 
-export function DataTable({ initialData, initialValidationErrors, onStartOver }: DataTableProps) {
+export function DataTable({ initialData, initialValidationErrors }: DataTableProps) {
   const [data, setData] = useState<InvoiceData>(initialData);
 
   const errorMap = useMemo(() => {
@@ -169,16 +168,16 @@ export function DataTable({ initialData, initialValidationErrors, onStartOver }:
       },
       styles: { cellPadding: 1 },
       columnStyles: {
-        0: { cellWidth: 30 },
-        1: { cellWidth: 30 },
+        0: { cellWidth: 25 },
+        1: { cellWidth: 25 },
         2: { cellWidth: 18 },
-        3: { cellWidth: 15 },
+        3: { cellWidth: 20 },
         4: { cellWidth: 18 },
         5: { cellWidth: 18 },
         6: { cellWidth: 15 },
         7: { cellWidth: 15 },
         8: { cellWidth: 18 },
-        9: { cellWidth: 15 },
+        9: { cellWidth: 20 },
         10: { cellWidth: 12 },
         11: { cellWidth: 25 },
         12: { cellWidth: 'auto' },
@@ -231,16 +230,16 @@ export function DataTable({ initialData, initialValidationErrors, onStartOver }:
           </CardDescription>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
             <div className="space-y-2">
-              <Label htmlFor="proveedor">Proveedor</Label>
-              <Input id="proveedor" value={data.proveedor} onChange={(e) => handleHeaderChange('proveedor', e.target.value)} />
+              <Label htmlFor={`proveedor-${initialData.numeroDeFactura}`}>Proveedor</Label>
+              <Input id={`proveedor-${initialData.numeroDeFactura}`} value={data.proveedor} onChange={(e) => handleHeaderChange('proveedor', e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="numeroDeFactura">Nº de Factura</Label>
-              <Input id="numeroDeFactura" value={data.numeroDeFactura} onChange={(e) => handleHeaderChange('numeroDeFactura', e.target.value)} />
+              <Label htmlFor={`numeroDeFactura-${initialData.numeroDeFactura}`}>Nº de Factura</Label>
+              <Input id={`numeroDeFactura-${initialData.numeroDeFactura}`} value={data.numeroDeFactura} onChange={(e) => handleHeaderChange('numeroDeFactura', e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="fechaDeEmision">Fecha de Emisión</Label>
-              <Input id="fechaDeEmision" value={data.fechaDeEmision} onChange={(e) => handleHeaderChange('fechaDeEmision', e.target.value)} />
+              <Label htmlFor={`fechaDeEmision-${initialData.numeroDeFactura}`}>Fecha de Emisión</Label>
+              <Input id={`fechaDeEmision-${initialData.numeroDeFactura}`} value={data.fechaDeEmision} onChange={(e) => handleHeaderChange('fechaDeEmision', e.target.value)} />
             </div>
           </div>
         </CardHeader>
@@ -286,10 +285,6 @@ export function DataTable({ initialData, initialValidationErrors, onStartOver }:
           </div>
         </CardContent>
         <CardFooter className="flex justify-end gap-2">
-            <Button variant="outline" onClick={onStartOver}>
-                <RefreshCcw className="mr-2 h-4 w-4" />
-                Empezar de Nuevo
-            </Button>
             <Button onClick={generatePdf} className="bg-accent hover:bg-accent/90">
                 <Download className="mr-2 h-4 w-4" />
                 Generar PDF

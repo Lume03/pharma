@@ -6,18 +6,17 @@ import { DataTable } from '@/components/data-table';
 import { InvoiceHistory } from '@/components/invoice-history';
 import { extractAndValidateInvoiceAction } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
-import type { InvoiceData, ValidationError, InvoiceHistoryItem } from '@/types';
-import { Loader2, History } from 'lucide-react';
+import type { ProcessedInvoice, InvoiceHistoryItem } from '@/types';
+import { Loader2, History, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 type AppState = 'idle' | 'loading' | 'success' | 'error' | 'history';
 
 export default function Home() {
   const [appState, setAppState] = useState<AppState>('idle');
-  const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
-  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
+  const [processedInvoices, setProcessedInvoices] = useState<ProcessedInvoice[] | null>(null);
   const [invoiceHistory, setInvoiceHistory] = useState<InvoiceHistoryItem[]>([]);
-  const [progress, setProgress] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -39,29 +38,15 @@ export default function Home() {
 
   const handleProcessInvoice = async (file: File) => {
     setAppState('loading');
-    setProgress(10);
 
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = async () => {
       const dataUri = reader.result as string;
-      setProgress(30);
-
-      const progressInterval = setInterval(() => {
-        setProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + 5;
-        });
-      }, 500);
 
       const result = await extractAndValidateInvoiceAction(dataUri);
-      clearInterval(progressInterval);
-      setProgress(100);
 
-      if (result.errorMessage || !result.data) {
+      if (result.errorMessage || !result.processedInvoices) {
         setAppState('error');
         toast({
           variant: 'destructive',
@@ -71,22 +56,15 @@ export default function Home() {
         return;
       }
 
-      const initialData: InvoiceData = {
-        ...result.data,
-        productos: result.data.productos.map(p => ({ ...p })),
-      };
-
       const newHistoryItem: InvoiceHistoryItem = {
         id: Date.now().toString(),
         fileName: file.name,
         processedAt: new Date().toISOString(),
-        data: initialData,
-        errors: result.errors || [],
+        invoices: result.processedInvoices,
       };
-      updateHistory([...invoiceHistory, newHistoryItem]);
+      updateHistory([newHistoryItem, ...invoiceHistory]);
 
-      setInvoiceData(initialData);
-      setValidationErrors(result.errors || []);
+      setProcessedInvoices(result.processedInvoices);
       setAppState('success');
     };
     reader.onerror = () => {
@@ -100,8 +78,7 @@ export default function Home() {
   };
   
   const handleSelectFromHistory = (item: InvoiceHistoryItem) => {
-    setInvoiceData(item.data);
-    setValidationErrors(item.errors);
+    setProcessedInvoices(item.invoices);
     setAppState('success');
   };
 
@@ -111,10 +88,8 @@ export default function Home() {
   };
 
   const handleStartOver = () => {
-    setInvoiceData(null);
-    setValidationErrors([]);
+    setProcessedInvoices(null);
     setAppState('idle');
-    setProgress(0);
   };
   
   const handleShowHistory = () => {
@@ -132,13 +107,32 @@ export default function Home() {
           </div>
         );
       case 'success':
-        if (invoiceData) {
+        if (processedInvoices) {
           return (
-            <DataTable
-              initialData={invoiceData}
-              initialValidationErrors={validationErrors}
-              onStartOver={handleStartOver}
-            />
+            <div className="w-full flex flex-col gap-8">
+                <Card>
+                    <CardHeader>
+                        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                            <div>
+                                <CardTitle>Facturas Procesadas</CardTitle>
+                                <CardDescription>Se encontraron {processedInvoices.length} factura(s). Revisa y edita los datos antes de exportar.</CardDescription>
+                            </div>
+                            <Button variant="outline" onClick={handleStartOver}>
+                                <RefreshCcw className="mr-2 h-4 w-4" />
+                                Empezar de Nuevo
+                            </Button>
+                        </div>
+                    </CardHeader>
+                </Card>
+
+                {processedInvoices.map((invoice, index) => (
+                    <DataTable
+                        key={invoice.data.numeroDeFactura || index}
+                        initialData={invoice.data}
+                        initialValidationErrors={invoice.errors}
+                    />
+                ))}
+            </div>
           );
         }
         return null;
@@ -178,7 +172,7 @@ export default function Home() {
 
   return (
     <div className="container mx-auto px-4 py-8 md:px-6 md:py-12">
-      <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="flex w-full items-start justify-center">
         {renderContent()}
       </div>
     </div>

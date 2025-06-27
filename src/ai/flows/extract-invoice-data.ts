@@ -1,9 +1,9 @@
 'use server';
 
 /**
- * @fileOverview Extrae datos de las facturas en PDF subidas.
+ * @fileOverview Extrae datos de una o varias facturas contenidas en un único archivo PDF.
  *
- * - extractInvoiceData - Extrae los datos de la factura de un PDF.
+ * - extractInvoiceData - Extrae los datos de todas las facturas de un PDF.
  * - ExtractInvoiceDataInput - El tipo de entrada para la función extractInvoiceData.
  * - ExtractInvoiceDataOutput - El tipo de retorno para la función extractInvoiceData.
  */
@@ -36,12 +36,17 @@ const InvoiceItemSchema = z.object({
   observaciones: z.string().optional().describe('Observaciones.'),
 });
 
-const ExtractInvoiceDataOutputSchema = z.object({
+const SingleInvoiceSchema = z.object({
   proveedor: z.string().describe('El nombre del proveedor.'),
   numeroDeFactura: z.string().describe('El número de factura.'),
   fechaDeEmision: z.string().describe('La fecha de emisión de la factura (YYYY-MM-DD).'),
   productos: z.array(InvoiceItemSchema).describe('Array de productos en la factura.'),
 });
+
+const ExtractInvoiceDataOutputSchema = z.object({
+  invoices: z.array(SingleInvoiceSchema).describe("Una lista de todas las facturas encontradas en el documento."),
+});
+
 
 export type ExtractInvoiceDataOutput = z.infer<typeof ExtractInvoiceDataOutputSchema>;
 
@@ -54,29 +59,30 @@ const extractInvoiceDataPrompt = ai.definePrompt({
   input: {schema: ExtractInvoiceDataInputSchema},
   output: {schema: ExtractInvoiceDataOutputSchema},
   prompt: `Eres un asistente de IA especializado en extraer datos de facturas farmacéuticas.
-  Tu tarea es procesar la factura proporcionada como archivo multimedia y extraer la siguiente información:
+Tu tarea es procesar el documento PDF proporcionado, que puede contener una o varias facturas. Debes identificar cada factura individualmente y extraer la siguiente información para cada una.
 
-  - Proveedor (proveedor):
-  - Número de Factura (numeroDeFactura):
-  - Fecha de Emisión (fechaDeEmision):
-  - Una lista de productos (productos), con la siguiente información para cada producto:
-      - Nombre del Producto Farmacéutico (nombreDelProductoFarmaceutico)
-      - Nombre del Dispositivo Médico (nombreDelDispositivoMedico) - Si está disponible
-      - Forma Farmacéutica (formaFarmaceutica)
-      - Número de Lote (numeroDeLote)
-      - Concentración (concentracion)
-      - Presentación (presentacion)
-      - Fecha de Vencimiento (fechaDeVencimiento)
-      - Registro Sanitario (registroSanitario) - Si está disponible
-      - Cantidad Recibida (cantidadRecibida)
-      - Envase Inmediato (envaseInmediato) - Si está disponible
-      - Envase Mediato (envaseMediato) - Si está disponible
-      - Condiciones de Almacenamiento (condicionesDeAlmacenamiento) - Si está disponible
-      - Observaciones (observaciones) - Si está disponible
+Para cada factura, extrae:
+- Proveedor (proveedor):
+- Número de Factura (numeroDeFactura):
+- Fecha de Emisión (fechaDeEmision):
+- Una lista de productos (productos), con la siguiente información para cada producto:
+    - Nombre del Producto Farmacéutico (nombreDelProductoFarmaceutico)
+    - Nombre del Dispositivo Médico (nombreDelDispositivoMedico) - Si está disponible
+    - Forma Farmacéutica (formaFarmaceutica)
+    - Número de Lote (numeroDeLote)
+    - Concentración (concentracion)
+    - Presentación (presentacion)
+    - Fecha de Vencimiento (fechaDeVencimiento)
+    - Registro Sanitario (registroSanitario) - Si está disponible
+    - Cantidad Recibida (cantidadRecibida)
+    - Envase Inmediato (envaseInmediato) - Si está disponible
+    - Envase Mediato (envaseMediato) - Si está disponible
+    - Condiciones de Almacenamiento (condicionesDeAlmacenamiento) - Si está disponible
+    - Observaciones (observaciones) - Si está disponible
 
-  Aquí está la factura: {{media url=invoiceDataUri}}
+Aquí está el documento PDF: {{media url=invoiceDataUri}}
 
-  Asegúrate de que la salida de los datos sea en formato JSON.
+Asegúrate de que la salida sea un único objeto JSON. Este objeto debe tener una clave llamada "invoices", que contenga un array. Cada elemento de este array será un objeto JSON que representa una factura individual extraída del PDF.
   `,
 });
 

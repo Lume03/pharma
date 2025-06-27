@@ -1,24 +1,40 @@
-import type { ExtractInvoiceDataOutput } from '@/ai/flows/extract-invoice-data';
-import type { ValidateExtractedDataOutput } from '@/ai/flows/validate-extracted-data';
-
-export type Product = ExtractInvoiceDataOutput['productos'][number] & {
+export interface Product {
+  nombreDelProductoFarmaceutico: string;
+  nombreDelDispositivoMedico?: string;
+  formaFarmaceutica: string;
+  numeroDeLote: string;
+  concentracion: string;
+  presentacion: string;
+  fechaDeVencimiento: string;
+  registroSanitario?: string;
+  cantidadRecibida: string;
   // Añadir los campos manuales del formulario
   envaseInmediato?: string;
   envaseMediato?: string;
   condicionesDeAlmacenamiento?: string;
   observaciones?: string;
-};
+}
 
-export interface InvoiceData extends Omit<ExtractInvoiceDataOutput, 'productos'> {
+export interface InvoiceData {
+  proveedor: string;
+  numeroDeFactura: string;
+  fechaDeEmision: string;
   productos: Product[];
 }
 
-export type ValidationError = ValidateExtractedDataOutput['validationErrors'][number];
+export interface ValidationError {
+  field: string;
+  message: string;
+}
+
+export interface ProcessedInvoice {
+  data: InvoiceData;
+  errors: ValidationError[];
+}
 
 export interface InvoiceHistoryItem {
   id: string;
   fileName: string;
   processedAt: string;
-  data: InvoiceData;
-  errors: ValidationError[];
+  invoices: ProcessedInvoice[];
 }

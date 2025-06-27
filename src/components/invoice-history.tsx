@@ -47,9 +47,9 @@ export function InvoiceHistory({ history, onSelect, onDelete, onGoToUpload }: In
             {history.map((item) => (
               <Card key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4">
                 <div className="mb-4 sm:mb-0">
-                  <p className="font-semibold text-lg">{item.data.proveedor}</p>
+                  <p className="font-semibold text-lg">{item.fileName}</p>
                   <p className="text-sm text-muted-foreground">
-                    Factura #{item.data.numeroDeFactura} - {item.data.fechaDeEmision}
+                    {item.invoices.length} factura(s) encontrada(s)
                   </p>
                   <p className="text-xs text-muted-foreground">Procesado: {new Date(item.processedAt).toLocaleString('es-ES')}</p>
                 </div>
