@@ -53,7 +53,8 @@ export function DataTable({ initialData, initialValidationErrors, onStartOver }:
   };
 
   const generatePdf = () => {
-    const doc = new jsPDF();
+    const doc = new jsPDF({ orientation: 'landscape' });
+    const pageW = doc.internal.pageSize.getWidth();
     
     // Header section
     doc.setFontSize(14);
@@ -70,11 +71,11 @@ export function DataTable({ initialData, initialValidationErrors, onStartOver }:
 
     doc.setFontSize(12);
     doc.setFont('Inter', 'bold');
-    doc.text('BOTICA F-KIDS', 140, 15, { align: 'center' });
+    doc.text('BOTICA F-KIDS', pageW - 70, 15, { align: 'center' });
 
     doc.setFontSize(9);
     doc.setFont('Inter', 'normal');
-    doc.text('POE BFKIDS-10: RECEPCIÓN DE PRODUCTOS FARMACÉUTICOS, DISPOSITIVOS MÉDICOS Y PRODUCTOS SANITARIOS', 140, 22, { align: 'center' });
+    doc.text('POE BFKIDS-10: RECEPCIÓN DE PRODUCTOS FARMACÉUTICOS, DISPOSITIVOS MÉDICOS Y PRODUCTOS SANITARIOS', pageW - 70, 22, { align: 'center', maxWidth: 120 });
     
     autoTable(doc, {
         body: [[
@@ -85,7 +86,7 @@ export function DataTable({ initialData, initialValidationErrors, onStartOver }:
         theme: 'plain',
         styles: { cellPadding: 1, fontSize: 9 },
         tableWidth: 'wrap',
-        margin: { left: 78 }
+        margin: { left: pageW - 120 }
     });
 
     // Details section
@@ -104,7 +105,7 @@ export function DataTable({ initialData, initialValidationErrors, onStartOver }:
       theme: 'plain',
       styles: { cellPadding: 0.5, fontSize: 10 },
       columnStyles: {
-        0: { cellWidth: 130 },
+        0: { cellWidth: 180 },
         1: { cellWidth: 'auto' }
       }
     });
@@ -141,7 +142,7 @@ export function DataTable({ initialData, initialValidationErrors, onStartOver }:
       p.observaciones || '',
     ]);
 
-    const requiredRows = 15;
+    const requiredRows = 10;
     while (tableBody.length < requiredRows) {
         tableBody.push(Array(tableHead.length).fill(''));
     }
@@ -168,27 +169,27 @@ export function DataTable({ initialData, initialValidationErrors, onStartOver }:
       },
       styles: { cellPadding: 1 },
       columnStyles: {
-        0: { cellWidth: 22 },
-        1: { cellWidth: 22 },
-        2: { cellWidth: 15 },
-        3: { cellWidth: 12 },
-        4: { cellWidth: 15 },
-        5: { cellWidth: 15 },
-        6: { cellWidth: 12 },
-        7: { cellWidth: 12 },
-        8: { cellWidth: 15 },
-        9: { cellWidth: 12 },
-        10: { cellWidth: 10 },
-        11: { cellWidth: 18 },
+        0: { cellWidth: 30 },
+        1: { cellWidth: 30 },
+        2: { cellWidth: 18 },
+        3: { cellWidth: 15 },
+        4: { cellWidth: 18 },
+        5: { cellWidth: 18 },
+        6: { cellWidth: 15 },
+        7: { cellWidth: 15 },
+        8: { cellWidth: 18 },
+        9: { cellWidth: 15 },
+        10: { cellWidth: 12 },
+        11: { cellWidth: 25 },
         12: { cellWidth: 'auto' },
       }
     });
     
     const finalY = (doc as any).lastAutoTable.finalY;
     const pageHeight = doc.internal.pageSize.getHeight();
-    let signatureY = finalY + 20;
+    let signatureY = finalY + 15;
 
-    if (finalY > pageHeight - 40) {
+    if (finalY > pageHeight - 35) {
       doc.addPage();
       signatureY = 30;
     }
@@ -198,8 +199,8 @@ export function DataTable({ initialData, initialValidationErrors, onStartOver }:
     doc.text('RECEPCIONADO POR:', 45, signatureY + 15, { align: 'center' });
     doc.line(20, signatureY + 17, 70, signatureY + 17);
     
-    doc.text('DIRECTOR TÉCNICO:', 160, signatureY + 15, { align: 'center' });
-    doc.line(135, signatureY + 17, 185, signatureY + 17);
+    doc.text('DIRECTOR TÉCNICO:', pageW - 45, signatureY + 15, { align: 'center' });
+    doc.line(pageW - 70, signatureY + 17, pageW - 20, signatureY + 17);
 
     doc.save(`recepcion_${data.numeroDeFactura}.pdf`);
   };
