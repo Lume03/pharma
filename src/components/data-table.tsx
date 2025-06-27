@@ -5,6 +5,7 @@ import type { InvoiceData, Product, ValidationError } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -46,7 +47,7 @@ export function DataTable({ initialData, initialValidationErrors, onStartOver }:
     setData({ ...data, productos: updatedProducts });
   };
   
-  const handleHeaderChange = (field: keyof InvoiceData, value: string) => {
+  const handleHeaderChange = (field: keyof Omit<InvoiceData, 'productos'>, value: string) => {
     setData({ ...data, [field]: value });
   };
 
@@ -162,9 +163,18 @@ export function DataTable({ initialData, initialValidationErrors, onStartOver }:
             Verifique los datos extraídos por la IA. Puede editar cualquier campo antes de generar el PDF final.
           </CardDescription>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
-            <Input label="Proveedor" value={data.proveedor} onChange={(e) => handleHeaderChange('proveedor', e.target.value)} />
-            <Input label="Nº de Factura" value={data.numeroDeFactura} onChange={(e) => handleHeaderChange('numeroDeFactura', e.target.value)} />
-            <Input label="Fecha de Emisión" value={data.fechaDeEmision} onChange={(e) => handleHeaderChange('fechaDeEmision', e.target.value)} />
+            <div className="space-y-2">
+              <Label htmlFor="proveedor">Proveedor</Label>
+              <Input id="proveedor" value={data.proveedor} onChange={(e) => handleHeaderChange('proveedor', e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="numeroDeFactura">Nº de Factura</Label>
+              <Input id="numeroDeFactura" value={data.numeroDeFactura} onChange={(e) => handleHeaderChange('numeroDeFactura', e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="fechaDeEmision">Fecha de Emisión</Label>
+              <Input id="fechaDeEmision" value={data.fechaDeEmision} onChange={(e) => handleHeaderChange('fechaDeEmision', e.target.value)} />
+            </div>
           </div>
         </CardHeader>
         <CardContent>
