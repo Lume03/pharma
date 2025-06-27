@@ -205,17 +205,17 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
   };
   
   const columns: { key: keyof Product, label: string, isTextarea?: boolean, widthClass?: string }[] = [
-      { key: 'nombreDelProductoFarmaceutico', label: 'Nombre Producto Farmaceutico', widthClass: 'min-w-[250px]' },
-      { key: 'nombreDelDispositivoMedico', label: 'Nombre Dispositivo Médico', widthClass: 'min-w-[250px]' },
-      { key: 'formaFarmaceutica', label: 'Forma Farmacéutica', widthClass: 'min-w-[200px]' },
-      { key: 'numeroDeLote', label: 'Nº Lote', widthClass: 'min-w-[180px]' },
-      { key: 'concentracion', label: 'Concentración', widthClass: 'min-w-[150px]' },
-      { key: 'presentacion', label: 'Presentación', widthClass: 'min-w-[150px]' },
-      { key: 'fechaDeVencimiento', label: 'F. Vencimiento', widthClass: 'min-w-[150px]' },
-      { key: 'registroSanitario', label: 'Reg. Sanitario', widthClass: 'min-w-[180px]' },
+      { key: 'nombreDelProductoFarmaceutico', label: 'Nombre Producto Farmaceutico', isTextarea: true, widthClass: 'min-w-[250px]' },
+      { key: 'nombreDelDispositivoMedico', label: 'Nombre Dispositivo Médico', isTextarea: true, widthClass: 'min-w-[250px]' },
+      { key: 'formaFarmaceutica', label: 'Forma Farmacéutica', isTextarea: true, widthClass: 'min-w-[200px]' },
+      { key: 'numeroDeLote', label: 'Nº Lote', isTextarea: true, widthClass: 'min-w-[180px]' },
+      { key: 'concentracion', label: 'Concentración', isTextarea: true, widthClass: 'min-w-[150px]' },
+      { key: 'presentacion', label: 'Presentación', isTextarea: true, widthClass: 'min-w-[150px]' },
+      { key: 'fechaDeVencimiento', label: 'F. Vencimiento', isTextarea: true, widthClass: 'min-w-[150px]' },
+      { key: 'registroSanitario', label: 'Reg. Sanitario', isTextarea: true, widthClass: 'min-w-[180px]' },
       { key: 'cantidadRecibida', label: 'Cant. Recibida', widthClass: 'min-w-[120px]' },
-      { key: 'envaseInmediato', label: 'Envase Inmediato', widthClass: 'min-w-[150px]' },
-      { key: 'envaseMediato', label: 'Envase Mediato', widthClass: 'min-w-[150px]' },
+      { key: 'envaseInmediato', label: 'Envase Inmediato', isTextarea: true, widthClass: 'min-w-[150px]' },
+      { key: 'envaseMediato', label: 'Envase Mediato', isTextarea: true, widthClass: 'min-w-[150px]' },
       { key: 'condicionesDeAlmacenamiento', label: 'Cond. Almacenamiento', isTextarea: true, widthClass: 'min-w-[250px]' },
       { key: 'observaciones', label: 'Observaciones', isTextarea: true, widthClass: 'min-w-[250px]' },
   ];
