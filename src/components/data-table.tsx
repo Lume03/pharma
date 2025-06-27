@@ -260,6 +260,15 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
                         const error = errorMap[errorKey];
                         const InputComponent = col.isTextarea ? Textarea : Input;
 
+                        const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+                            if (col.key === 'cantidadRecibida') {
+                              const value = (e.target as HTMLInputElement).value;
+                              if (value && /^\d+$/.test(value)) {
+                                handleInputChange(rowIndex, 'cantidadRecibida', `${value}.00`);
+                              }
+                            }
+                        };
+
                         return (
                         <TableCell key={col.key} className={col.widthClass}>
                             <Tooltip>
@@ -268,6 +277,7 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
                                     <InputComponent
                                         value={product[col.key] || ''}
                                         onChange={(e) => handleInputChange(rowIndex, col.key, e.target.value)}
+                                        onBlur={handleBlur}
                                         className={error ? 'border-destructive ring-destructive ring-1' : ''}
                                         />
                                     {error && <AlertCircle className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />}
