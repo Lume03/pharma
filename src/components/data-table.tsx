@@ -211,11 +211,11 @@ export function DataTable({ initialData, initialValidationErrors, onStartOver }:
         <CardFooter className="flex justify-end gap-2">
             <Button variant="outline" onClick={onStartOver}>
                 <RefreshCcw className="mr-2 h-4 w-4" />
-                Start Over
+                Empezar de Nuevo
             </Button>
             <Button onClick={generatePdf} className="bg-accent hover:bg-accent/90">
                 <Download className="mr-2 h-4 w-4" />
-                Generate PDF
+                Generar PDF
             </Button>
         </CardFooter>
       </Card>

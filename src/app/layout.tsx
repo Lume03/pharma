@@ -5,7 +5,7 @@ import { Header } from '@/components/layout/header';
 
 export const metadata: Metadata = {
   title: 'PharmaReceipt AI',
-  description: 'Automate and digitize the reception of pharmaceutical products.',
+  description: 'Automatiza y digitaliza la recepción de productos farmacéuticos.',
 };
 
 export default function RootLayout({
@@ -14,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="es" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

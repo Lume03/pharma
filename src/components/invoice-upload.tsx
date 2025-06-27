@@ -19,8 +19,8 @@ export function InvoiceUpload({ onProcess }: InvoiceUploadProps) {
     if (rejectedFiles.length > 0) {
       toast({
         variant: 'destructive',
-        title: 'File Upload Error',
-        description: 'Only PDF files are accepted. Please try again.',
+        title: 'Error al Subir Archivo',
+        description: 'Solo se aceptan archivos PDF. Por favor, inténtalo de nuevo.',
       });
       return;
     }
@@ -57,9 +57,9 @@ export function InvoiceUpload({ onProcess }: InvoiceUploadProps) {
             <input {...getInputProps()} />
             <UploadCloud className={`h-12 w-12 mb-4 ${isDragActive ? 'text-primary' : 'text-muted-foreground'}`} />
             <p className="text-lg font-semibold text-center">
-              {isDragActive ? 'Drop the invoice here!' : 'Drag & drop your PDF invoice here'}
+              {isDragActive ? '¡Suelta la factura aquí!' : 'Arrastra y suelta tu factura PDF aquí'}
             </p>
-            <p className="text-muted-foreground">or click to browse</p>
+            <p className="text-muted-foreground">o haz clic para buscar</p>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center text-center">
@@ -71,7 +71,7 @@ export function InvoiceUpload({ onProcess }: InvoiceUploadProps) {
                 </Button>
             </div>
             <Button onClick={handleProcess} className="w-full" size="lg">
-              Process Invoice
+              Procesar Factura
             </Button>
           </div>
         )}

@@ -2,7 +2,7 @@ import type { ExtractInvoiceDataOutput } from '@/ai/flows/extract-invoice-data';
 import type { ValidateExtractedDataOutput } from '@/ai/flows/validate-extracted-data';
 
 export type Product = ExtractInvoiceDataOutput['productos'][number] & {
-  // Add the manual fields from the form
+  // Añadir los campos manuales del formulario
   envaseInmediato?: string;
   envaseMediato?: string;
   condicionesDeAlmacenamiento?: string;

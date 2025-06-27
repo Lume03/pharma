@@ -1,42 +1,42 @@
 'use server';
 
 /**
- * @fileOverview A flow to validate extracted data from invoices using AI.
+ * @fileOverview Un flujo para validar datos extraídos de facturas usando IA.
  *
- * - validateExtractedData - Validates extracted data and highlights potential errors.
- * - ValidateExtractedDataInput - The input type for the validateExtractedData function.
- * - ValidateExtractedDataOutput - The return type for the validateExtractedData function.
+ * - validateExtractedData - Valida los datos extraídos y resalta posibles errores.
+ * - ValidateExtractedDataInput - El tipo de entrada para la función validateExtractedData.
+ * - ValidateExtractedDataOutput - El tipo de retorno para la función validateExtractedData.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const ValidateExtractedDataInputSchema = z.object({
-  supplier: z.string().describe('The name of the supplier.'),
-  invoiceNumber: z.string().describe('The invoice number.'),
-  invoiceDate: z.string().describe('The invoice date.'),
+  supplier: z.string().describe('El nombre del proveedor.'),
+  invoiceNumber: z.string().describe('El número de factura.'),
+  invoiceDate: z.string().describe('La fecha de la factura.'),
   products: z.array(
     z.object({
-      productName: z.string().describe('The name of the product.'),
-      form: z.string().describe('The form of the product.'),
-      lotNumber: z.string().describe('The lot number of the product.'),
-      concentration: z.string().describe('The concentration of the product.'),
-      presentation: z.string().describe('The presentation of the product.'),
-      expirationDate: z.string().describe('The expiration date of the product.'),
-      registrationNumber: z.string().optional().describe('The registration number of the product.'),
-      quantityReceived: z.string().describe('The quantity received of the product.'),
+      productName: z.string().describe('El nombre del producto.'),
+      form: z.string().describe('La forma del producto.'),
+      lotNumber: z.string().describe('El número de lote del producto.'),
+      concentration: z.string().describe('La concentración del producto.'),
+      presentation: z.string().describe('La presentación del producto.'),
+      expirationDate: z.string().describe('La fecha de vencimiento del producto.'),
+      registrationNumber: z.string().optional().describe('El número de registro del producto.'),
+      quantityReceived: z.string().describe('La cantidad recibida del producto.'),
     })
-  ).describe('The list of products in the invoice.'),
+  ).describe('La lista de productos en la factura.'),
 });
 export type ValidateExtractedDataInput = z.infer<typeof ValidateExtractedDataInputSchema>;
 
 const ValidationErrorSchema = z.object({
-  field: z.string().describe('The field that has the error.'),
-  message: z.string().describe('The error message for the field.'),
+  field: z.string().describe('El campo que tiene el error.'),
+  message: z.string().describe('El mensaje de error para el campo.'),
 });
 
 const ValidateExtractedDataOutputSchema = z.object({
-  validationErrors: z.array(ValidationErrorSchema).describe('The list of validation errors found in the extracted data.'),
+  validationErrors: z.array(ValidationErrorSchema).describe('La lista de errores de validación encontrados en los datos extraídos.'),
 });
 export type ValidateExtractedDataOutput = z.infer<typeof ValidateExtractedDataOutputSchema>;
 
@@ -48,26 +48,26 @@ const validateExtractedDataPrompt = ai.definePrompt({
   name: 'validateExtractedDataPrompt',
   input: {schema: ValidateExtractedDataInputSchema},
   output: {schema: ValidateExtractedDataOutputSchema},
-  prompt: `You are an AI assistant specialized in validating data extracted from pharmaceutical invoices. You will receive data extracted from an invoice and your task is to identify any potential errors or missing information. Provide a list of validation errors with the field name and a descriptive error message.
+  prompt: `Eres un asistente de IA especializado en validar datos extraídos de facturas farmacéuticas. Recibirás datos extraídos de una factura y tu tarea es identificar cualquier posible error o información faltante. Proporciona una lista de errores de validación con el nombre del campo y un mensaje de error descriptivo.
 
-Invoice Data:
-Supplier: {{{supplier}}}
-Invoice Number: {{{invoiceNumber}}}
-Invoice Date: {{{invoiceDate}}}
+Datos de la Factura:
+Proveedor: {{{supplier}}}
+Número de Factura: {{{invoiceNumber}}}
+Fecha de la Factura: {{{invoiceDate}}}
 
-Products:
+Productos:
 {{#each products}}
-Product Name: {{{productName}}}
-Form: {{{form}}}
-Lot Number: {{{lotNumber}}}
-Concentration: {{{concentration}}}
-Presentation: {{{presentation}}}
-Expiration Date: {{{expirationDate}}}
-Registration Number: {{{registrationNumber}}}
-Quantity Received: {{{quantityReceived}}}
+Nombre del Producto: {{{productName}}}
+Forma: {{{form}}}
+Número de Lote: {{{lotNumber}}}
+Concentración: {{{concentration}}}
+Presentación: {{{presentation}}}
+Fecha de Vencimiento: {{{expirationDate}}}
+Número de Registro: {{{registrationNumber}}}
+Cantidad Recibida: {{{quantityReceived}}}
 {{/each}}
 
-Output Format: An array of JSON objects, where each object has a 'field' and a 'message' key. The 'field' key indicates the field with the error, and the 'message' key provides a description of the error.
+Formato de Salida: Un array de objetos JSON, donde cada objeto tiene una clave 'field' y 'message'. La clave 'field' indica el campo con el error, y la clave 'message' proporciona una descripción del error.
 `,
 });
 

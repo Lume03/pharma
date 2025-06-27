@@ -46,8 +46,8 @@ export default function Home() {
         setAppState('error');
         toast({
           variant: 'destructive',
-          title: 'Error Processing Invoice',
-          description: result.errorMessage || 'An unknown error occurred.',
+          title: 'Error al Procesar la Factura',
+          description: result.errorMessage || 'Ocurrió un error desconocido.',
         });
         return;
       }
@@ -65,8 +65,8 @@ export default function Home() {
       setAppState('error');
       toast({
         variant: 'destructive',
-        title: 'Error Reading File',
-        description: 'Could not read the selected file. Please try again.',
+        title: 'Error al Leer el Archivo',
+        description: 'No se pudo leer el archivo seleccionado. Por favor, inténtalo de nuevo.',
       });
     };
   };
@@ -84,8 +84,8 @@ export default function Home() {
         return (
           <div className="flex flex-col items-center justify-center gap-4 text-center">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            <p className="text-lg font-medium text-muted-foreground">Extracting data from your invoice...</p>
-            <p className="text-sm text-muted-foreground">AI is at work. This may take a moment.</p>
+            <p className="text-lg font-medium text-muted-foreground">Extrayendo datos de su factura...</p>
+            <p className="text-sm text-muted-foreground">La IA está trabajando. Esto puede tomar un momento.</p>
           </div>
         );
       case 'success':
@@ -107,7 +107,7 @@ export default function Home() {
              <div className="text-center mb-8">
               <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">PharmaReceipt AI</h1>
               <p className="mt-2 text-lg text-muted-foreground">
-                Upload your invoice to automatically extract, verify, and format your pharmaceutical reception data.
+                Sube tu factura para extraer, verificar y formatear automáticamente los datos de recepción de tus productos farmacéuticos.
               </p>
             </div>
             <InvoiceUpload onProcess={handleProcessInvoice} />

@@ -3,11 +3,11 @@
 'use server';
 
 /**
- * @fileOverview Extracts data from uploaded invoice PDFs.
+ * @fileOverview Extrae datos de las facturas en PDF subidas.
  *
- * - extractInvoiceData - Extracts invoice data from a PDF.
- * - ExtractInvoiceDataInput - The input type for the extractInvoiceData function.
- * - ExtractInvoiceDataOutput - The return type for the extractInvoiceData function.
+ * - extractInvoiceData - Extrae los datos de la factura de un PDF.
+ * - ExtractInvoiceDataInput - El tipo de entrada para la función extractInvoiceData.
+ * - ExtractInvoiceDataOutput - El tipo de retorno para la función extractInvoiceData.
  */
 
 import {ai} from '@/ai/genkit';
@@ -17,31 +17,31 @@ const ExtractInvoiceDataInputSchema = z.object({
   invoiceDataUri: z
     .string()
     .describe(
-      "The invoice PDF, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      "El PDF de la factura, como un URI de datos que debe incluir un tipo MIME y usar codificación Base64. Formato esperado: 'data:<mimetype>;base64,<encoded_data>'."
     ),
 });
 export type ExtractInvoiceDataInput = z.infer<typeof ExtractInvoiceDataInputSchema>;
 
 const InvoiceItemSchema = z.object({
-  nombreDelProductoFarmaceutico: z.string().describe('Name of the pharmaceutical product.'),
-  formaFarmaceutica: z.string().describe('Pharmaceutical form (e.g., CAJA X 100 CAPS).'),
-  numeroDeLote: z.string().describe('Lot number.'),
-  concentracion: z.string().describe('Concentration (e.g., 875 mg + 125 mg).'),
-  presentacion: z.string().describe('Presentation (e.g., CAJA X 1 VIAL + SOLV).'),
-  fechaDeVencimiento: z.string().describe('Expiration date (YYYY-MM-DD).'),
-  registroSanitario: z.string().optional().describe('Sanitary registration number.'),
-  cantidadRecibida: z.string().describe('Quantity received.'),
-  envaseInmediato: z.string().optional().describe('Immediate packaging conditions.'),
-  envaseMediato: z.string().optional().describe('Mediate packaging conditions.'),
-  condicionesDeAlmacenamiento: z.string().optional().describe('Storage conditions.'),
-  observaciones: z.string().optional().describe('Observations.'),
+  nombreDelProductoFarmaceutico: z.string().describe('Nombre del producto farmacéutico.'),
+  formaFarmaceutica: z.string().describe('Forma farmacéutica (p. ej., CAJA X 100 CAPS).'),
+  numeroDeLote: z.string().describe('Número de lote.'),
+  concentracion: z.string().describe('Concentración (p. ej., 875 mg + 125 mg).'),
+  presentacion: z.string().describe('Presentación (p. ej., CAJA X 1 VIAL + SOLV).'),
+  fechaDeVencimiento: z.string().describe('Fecha de vencimiento (YYYY-MM-DD).'),
+  registroSanitario: z.string().optional().describe('Número de registro sanitario.'),
+  cantidadRecibida: z.string().describe('Cantidad recibida.'),
+  envaseInmediato: z.string().optional().describe('Condiciones del envase inmediato.'),
+  envaseMediato: z.string().optional().describe('Condiciones del envase mediato.'),
+  condicionesDeAlmacenamiento: z.string().optional().describe('Condiciones de almacenamiento.'),
+  observaciones: z.string().optional().describe('Observaciones.'),
 });
 
 const ExtractInvoiceDataOutputSchema = z.object({
-  proveedor: z.string().describe('The name of the supplier.'),
-  numeroDeFactura: z.string().describe('The invoice number.'),
-  fechaDeEmision: z.string().describe('The invoice issue date (YYYY-MM-DD).'),
-  productos: z.array(InvoiceItemSchema).describe('Array of products in the invoice.'),
+  proveedor: z.string().describe('El nombre del proveedor.'),
+  numeroDeFactura: z.string().describe('El número de factura.'),
+  fechaDeEmision: z.string().describe('La fecha de emisión de la factura (YYYY-MM-DD).'),
+  productos: z.array(InvoiceItemSchema).describe('Array de productos en la factura.'),
 });
 
 export type ExtractInvoiceDataOutput = z.infer<typeof ExtractInvoiceDataOutputSchema>;
@@ -54,29 +54,29 @@ const extractInvoiceDataPrompt = ai.definePrompt({
   name: 'extractInvoiceDataPrompt',
   input: {schema: ExtractInvoiceDataInputSchema},
   output: {schema: ExtractInvoiceDataOutputSchema},
-  prompt: `You are an AI assistant specialized in extracting data from pharmaceutical invoices.
-  Your task is to process the invoice provided as a media file and extract the following information:
+  prompt: `Eres un asistente de IA especializado en extraer datos de facturas farmacéuticas.
+  Tu tarea es procesar la factura proporcionada como archivo multimedia y extraer la siguiente información:
 
-  - Supplier (proveedor):
-  - Invoice Number (numeroDeFactura):
-  - Issue Date (fechaDeEmision):
-  - A list of products (productos), with the following information for each product:
-      - Product Name (nombreDelProductoFarmaceutico)
-      - Pharmaceutical Form (formaFarmaceutica)
-      - Lot Number (numeroDeLote)
-      - Concentration (concentracion)
-      - Presentation (presentacion)
-      - Expiration Date (fechaDeVencimiento)
-      - Sanitary Registration (registroSanitario) - If available
-      - Quantity Received (cantidadRecibida)
-      - Immediate Packaging (envaseInmediato) - If available
-      - Mediate Packaging (envaseMediato) - If available
-      - Storage Conditions (condicionesDeAlmacenamiento) - If available
-      - Observations (observaciones) - If available
+  - Proveedor (proveedor):
+  - Número de Factura (numeroDeFactura):
+  - Fecha de Emisión (fechaDeEmision):
+  - Una lista de productos (productos), con la siguiente información para cada producto:
+      - Nombre del Producto Farmacéutico (nombreDelProductoFarmaceutico)
+      - Forma Farmacéutica (formaFarmaceutica)
+      - Número de Lote (numeroDeLote)
+      - Concentración (concentracion)
+      - Presentación (presentacion)
+      - Fecha de Vencimiento (fechaDeVencimiento)
+      - Registro Sanitario (registroSanitario) - Si está disponible
+      - Cantidad Recibida (cantidadRecibida)
+      - Envase Inmediato (envaseInmediato) - Si está disponible
+      - Envase Mediato (envaseMediato) - Si está disponible
+      - Condiciones de Almacenamiento (condicionesDeAlmacenamiento) - Si está disponible
+      - Observaciones (observaciones) - Si está disponible
 
-  Here is the invoice: {{media url=invoiceDataUri}}
+  Aquí está la factura: {{media url=invoiceDataUri}}
 
-  Make sure to output the data in JSON format.
+  Asegúrate de que la salida de los datos sea en formato JSON.
   `,
 });
 
@@ -91,4 +91,3 @@ const extractInvoiceDataFlow = ai.defineFlow(
     return output!;
   }
 );
-

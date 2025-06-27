@@ -12,7 +12,7 @@ interface ActionResult {
 
 export async function extractAndValidateInvoiceAction(invoiceDataUri: string): Promise<ActionResult> {
   if (!invoiceDataUri) {
-    return { data: null, errors: null, errorMessage: 'No invoice file provided.' };
+    return { data: null, errors: null, errorMessage: 'No se proporcionó ningún archivo de factura.' };
   }
 
   try {
@@ -47,11 +47,11 @@ export async function extractAndValidateInvoiceAction(invoiceDataUri: string): P
     };
   } catch (error) {
     console.error('Error during AI processing:', error);
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    const errorMessage = error instanceof Error ? error.message : 'Ocurrió un error desconocido.';
     return { 
         data: null, 
         errors: null, 
-        errorMessage: `Failed to process invoice. The AI model may have had trouble with this file format. Details: ${errorMessage}` 
+        errorMessage: `No se pudo procesar la factura. Es posible que el modelo de IA haya tenido problemas con este formato de archivo. Detalles: ${errorMessage}` 
     };
   }
 }
