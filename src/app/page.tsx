@@ -1,21 +1,41 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { InvoiceUpload } from '@/components/invoice-upload';
 import { DataTable } from '@/components/data-table';
+import { InvoiceHistory } from '@/components/invoice-history';
 import { extractAndValidateInvoiceAction } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
-import type { InvoiceData, ValidationError } from '@/types';
-import { Loader2 } from 'lucide-react';
+import type { InvoiceData, ValidationError, InvoiceHistoryItem } from '@/types';
+import { Loader2, History } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-type AppState = 'idle' | 'loading' | 'success' | 'error';
+type AppState = 'idle' | 'loading' | 'success' | 'error' | 'history';
 
 export default function Home() {
   const [appState, setAppState] = useState<AppState>('idle');
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
+  const [invoiceHistory, setInvoiceHistory] = useState<InvoiceHistoryItem[]>([]);
   const [progress, setProgress] = useState(0);
   const { toast } = useToast();
+
+  useEffect(() => {
+    try {
+      const storedHistory = localStorage.getItem('invoiceHistory');
+      if (storedHistory) {
+        setInvoiceHistory(JSON.parse(storedHistory));
+      }
+    } catch (error) {
+      console.error("Failed to parse invoice history from localStorage", error);
+      localStorage.removeItem('invoiceHistory');
+    }
+  }, []);
+
+  const updateHistory = (newHistory: InvoiceHistoryItem[]) => {
+    setInvoiceHistory(newHistory);
+    localStorage.setItem('invoiceHistory', JSON.stringify(newHistory));
+  };
 
   const handleProcessInvoice = async (file: File) => {
     setAppState('loading');
@@ -27,7 +47,6 @@ export default function Home() {
       const dataUri = reader.result as string;
       setProgress(30);
 
-      // Fake progress for better UX
       const progressInterval = setInterval(() => {
         setProgress(prev => {
           if (prev >= 90) {
@@ -57,6 +76,15 @@ export default function Home() {
         productos: result.data.productos.map(p => ({ ...p })),
       };
 
+      const newHistoryItem: InvoiceHistoryItem = {
+        id: Date.now().toString(),
+        fileName: file.name,
+        processedAt: new Date().toISOString(),
+        data: initialData,
+        errors: result.errors || [],
+      };
+      updateHistory([...invoiceHistory, newHistoryItem]);
+
       setInvoiceData(initialData);
       setValidationErrors(result.errors || []);
       setAppState('success');
@@ -70,6 +98,17 @@ export default function Home() {
       });
     };
   };
+  
+  const handleSelectFromHistory = (item: InvoiceHistoryItem) => {
+    setInvoiceData(item.data);
+    setValidationErrors(item.errors);
+    setAppState('success');
+  };
+
+  const handleDeleteFromHistory = (id: string) => {
+    const newHistory = invoiceHistory.filter(item => item.id !== id);
+    updateHistory(newHistory);
+  };
 
   const handleStartOver = () => {
     setInvoiceData(null);
@@ -77,6 +116,10 @@ export default function Home() {
     setAppState('idle');
     setProgress(0);
   };
+  
+  const handleShowHistory = () => {
+      setAppState('history');
+  }
 
   const renderContent = () => {
     switch (appState) {
@@ -98,7 +141,16 @@ export default function Home() {
             />
           );
         }
-        return null; // Should not happen
+        return null;
+      case 'history':
+        return (
+          <InvoiceHistory
+            history={invoiceHistory}
+            onSelect={handleSelectFromHistory}
+            onDelete={handleDeleteFromHistory}
+            onGoToUpload={handleStartOver}
+          />
+        );
       case 'idle':
       case 'error':
       default:
@@ -111,6 +163,14 @@ export default function Home() {
               </p>
             </div>
             <InvoiceUpload onProcess={handleProcessInvoice} />
+            {invoiceHistory.length > 0 && (
+                <div className="mt-6 text-center">
+                    <Button variant="ghost" onClick={handleShowHistory}>
+                        <History className="mr-2 h-4 w-4" />
+                        Ver Historial de Facturas
+                    </Button>
+                </div>
+            )}
           </div>
         );
     }

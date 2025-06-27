@@ -14,3 +14,11 @@ export interface InvoiceData extends Omit<ExtractInvoiceDataOutput, 'productos'>
 }
 
 export type ValidationError = ValidateExtractedDataOutput['validationErrors'][number];
+
+export interface InvoiceHistoryItem {
+  id: string;
+  fileName: string;
+  processedAt: string;
+  data: InvoiceData;
+  errors: ValidationError[];
+}
