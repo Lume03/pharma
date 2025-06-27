@@ -1,5 +1,3 @@
-// This file is machine-generated - edit at your own risk!
-
 'use server';
 
 /**
@@ -24,6 +22,7 @@ export type ExtractInvoiceDataInput = z.infer<typeof ExtractInvoiceDataInputSche
 
 const InvoiceItemSchema = z.object({
   nombreDelProductoFarmaceutico: z.string().describe('Nombre del producto farmacéutico.'),
+  nombreDelDispositivoMedico: z.string().optional().describe('Nombre del dispositivo médico.'),
   formaFarmaceutica: z.string().describe('Forma farmacéutica (p. ej., CAJA X 100 CAPS).'),
   numeroDeLote: z.string().describe('Número de lote.'),
   concentracion: z.string().describe('Concentración (p. ej., 875 mg + 125 mg).'),
@@ -62,6 +61,7 @@ const extractInvoiceDataPrompt = ai.definePrompt({
   - Fecha de Emisión (fechaDeEmision):
   - Una lista de productos (productos), con la siguiente información para cada producto:
       - Nombre del Producto Farmacéutico (nombreDelProductoFarmaceutico)
+      - Nombre del Dispositivo Médico (nombreDelDispositivoMedico) - Si está disponible
       - Forma Farmacéutica (formaFarmaceutica)
       - Número de Lote (numeroDeLote)
       - Concentración (concentracion)

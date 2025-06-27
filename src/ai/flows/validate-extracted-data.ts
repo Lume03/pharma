@@ -18,6 +18,7 @@ const ValidateExtractedDataInputSchema = z.object({
   products: z.array(
     z.object({
       productName: z.string().describe('El nombre del producto.'),
+      medicalDeviceName: z.string().optional().describe('El nombre del dispositivo médico.'),
       form: z.string().describe('La forma del producto.'),
       lotNumber: z.string().describe('El número de lote del producto.'),
       concentration: z.string().describe('La concentración del producto.'),
@@ -58,6 +59,7 @@ Fecha de la Factura: {{{invoiceDate}}}
 Productos:
 {{#each products}}
 Nombre del Producto: {{{productName}}}
+Nombre del Dispositivo Médico: {{{medicalDeviceName}}}
 Forma: {{{form}}}
 Número de Lote: {{{lotNumber}}}
 Concentración: {{{concentration}}}

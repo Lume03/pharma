@@ -21,6 +21,7 @@ interface DataTableProps {
 
 const keyMap: { [K in keyof Omit<Product, 'envaseInmediato' | 'envaseMediato' | 'condicionesDeAlmacenamiento' | 'observaciones'>]: string } = {
   nombreDelProductoFarmaceutico: 'productName',
+  nombreDelDispositivoMedico: 'medicalDeviceName',
   formaFarmaceutica: 'form',
   numeroDeLote: 'lotNumber',
   concentracion: 'concentration',
@@ -54,93 +55,158 @@ export function DataTable({ initialData, initialValidationErrors, onStartOver }:
   const generatePdf = () => {
     const doc = new jsPDF();
     
+    // Header section
+    doc.setFontSize(14);
     doc.setFont('Inter', 'bold');
-    doc.setFontSize(16);
-    doc.text('Formato de Recepción F-BFKIDS-10', 105, 15, { align: 'center' });
-    
+    doc.text('BOTICA', 20, 15);
+    doc.text('FARMA KIDS', 20, 21);
+    doc.setFontSize(8);
     doc.setFont('Inter', 'normal');
-    doc.setFontSize(12);
-    doc.text('Botica Farma Kids', 105, 22, { align: 'center' });
+    doc.text('Profesionales a su servicio', 20, 26);
+    doc.setDrawColor(100, 181, 246);
+    doc.setLineWidth(0.5);
+    doc.rect(15, 8, 50, 22);
+    doc.line(15, 23, 65, 23);
 
+    doc.setFontSize(12);
+    doc.setFont('Inter', 'bold');
+    doc.text('BOTICA F-KIDS', 140, 15, { align: 'center' });
+
+    doc.setFontSize(9);
+    doc.setFont('Inter', 'normal');
+    doc.text('POE BFKIDS-10: RECEPCIÓN DE PRODUCTOS FARMACÉUTICOS, DISPOSITIVOS MÉDICOS Y PRODUCTOS SANITARIOS', 140, 22, { align: 'center' });
+    
+    autoTable(doc, {
+        body: [[
+            { content: 'FORMATO DE RECEPCIÓN: F-BFKIDS-10', styles: { fontStyle: 'bold' } },
+            { content: 'VERSION: 00', styles: { fontStyle: 'bold' } }
+        ]],
+        startY: 25,
+        theme: 'plain',
+        styles: { cellPadding: 1, fontSize: 9 },
+        tableWidth: 'wrap',
+        margin: { left: 78 }
+    });
+
+    // Details section
     autoTable(doc, {
       body: [
-        [{ content: `Proveedor: ${data.proveedor}`, styles: { fontStyle: 'bold' } }],
-        [{ content: `Nº de Factura: ${data.numeroDeFactura}`, styles: { fontStyle: 'bold' } }],
-        [{ content: `Fecha de Emisión: ${data.fechaDeEmision}`, styles: { fontStyle: 'bold' } }],
+        [
+            { content: `PROVEEDOR: ${data.proveedor}`, styles: { fontStyle: 'bold' } },
+            { content: `FECHA: ${data.fechaDeEmision}`, styles: { fontStyle: 'bold' } }
+        ],
+        [
+            { content: `N° DE FACTURA: ${data.numeroDeFactura}`, styles: { fontStyle: 'bold' } },
+            { content: '' }
+        ]
       ],
-      startY: 30,
+      startY: (doc as any).lastAutoTable.finalY + 2,
       theme: 'plain',
-      styles: { cellPadding: 1 },
+      styles: { cellPadding: 0.5, fontSize: 10 },
+      columnStyles: {
+        0: { cellWidth: 130 },
+        1: { cellWidth: 'auto' }
+      }
     });
 
     const tableHead = [
-      'Nombre del Producto',
-      'Forma Farmacéutica',
-      'Nº Lote',
-      'Concentración',
-      'Presentación',
-      'F. Vencimiento',
-      'Reg. Sanitario',
-      'Cant. Recibida',
-      'Envase Inmediato',
-      'Envase Mediato',
-      'Cond. Almacenamiento',
-      'Observaciones',
+      'NOMBRE DEL PRODUCTO FARMACEUTICO',
+      'NOMBRE DEL DISPOSITIVO MEDICO',
+      'FORMA FARMACEUTICA',
+      'N° DE LOTE',
+      'CONCENTRACION',
+      'PRESENTACION',
+      'ENVASE INMEDIATO',
+      'ENVASE MEDIATO',
+      'FECHA DE VENCIMIENTO',
+      'REGISTRO SANITARIO',
+      'CANT. RECIBIDA',
+      'CONDICIONES DE ALMACENAMIENTO',
+      'OBSERVACIONES',
     ];
     
     const tableBody = data.productos.map(p => [
-      p.nombreDelProductoFarmaceutico,
-      p.formaFarmaceutica,
-      p.numeroDeLote,
-      p.concentracion,
-      p.presentacion,
-      p.fechaDeVencimiento,
-      p.registroSanitario || '',
-      p.cantidadRecibida,
+      p.nombreDelProductoFarmaceutico || '',
+      p.nombreDelDispositivoMedico || '',
+      p.formaFarmaceutica || '',
+      p.numeroDeLote || '',
+      p.concentracion || '',
+      p.presentacion || '',
       p.envaseInmediato || '',
       p.envaseMediato || '',
+      p.fechaDeVencimiento || '',
+      p.registroSanitario || '',
+      p.cantidadRecibida || '',
       p.condicionesDeAlmacenamiento || '',
       p.observaciones || '',
     ]);
 
+    const requiredRows = 15;
+    while (tableBody.length < requiredRows) {
+        tableBody.push(Array(tableHead.length).fill(''));
+    }
+
     autoTable(doc, {
       head: [tableHead],
       body: tableBody,
-      startY: (doc as any).lastAutoTable.finalY + 5,
-      headStyles: { fillColor: [100, 181, 246], textColor: 255, fontSize: 8 },
-      bodyStyles: { fontSize: 7 },
-      alternateRowStyles: { fillColor: [240, 244, 248] },
-      styles: { cellPadding: 1.5 },
+      startY: (doc as any).lastAutoTable.finalY + 2,
+      theme: 'grid',
+      headStyles: { 
+          fillColor: '#FFFFFF', 
+          textColor: 0, 
+          fontSize: 6,
+          lineWidth: 0.1,
+          lineColor: [0, 0, 0],
+          halign: 'center',
+          valign: 'middle'
+      },
+      bodyStyles: { 
+          fontSize: 7,
+          lineWidth: 0.1,
+          lineColor: [0, 0, 0],
+          minCellHeight: 8
+      },
+      styles: { cellPadding: 1 },
       columnStyles: {
-        0: { cellWidth: 30 },
-        1: { cellWidth: 20 },
+        0: { cellWidth: 22 },
+        1: { cellWidth: 22 },
         2: { cellWidth: 15 },
-        3: { cellWidth: 20 },
-        4: { cellWidth: 20 },
+        3: { cellWidth: 12 },
+        4: { cellWidth: 15 },
         5: { cellWidth: 15 },
-        6: { cellWidth: 15 },
-        7: { cellWidth: 15 },
+        6: { cellWidth: 12 },
+        7: { cellWidth: 12 },
+        8: { cellWidth: 15 },
+        9: { cellWidth: 12 },
+        10: { cellWidth: 10 },
+        11: { cellWidth: 18 },
+        12: { cellWidth: 'auto' },
       }
     });
     
     const finalY = (doc as any).lastAutoTable.finalY;
     const pageHeight = doc.internal.pageSize.getHeight();
-    const signatureY = finalY > pageHeight - 40 ? pageHeight - 30 : finalY + 20;
+    let signatureY = finalY + 20;
 
-    if (finalY > pageHeight - 40) doc.addPage();
+    if (finalY > pageHeight - 40) {
+      doc.addPage();
+      signatureY = 30;
+    }
     
     doc.setFontSize(10);
-    doc.text('Recepcionado Por:', 20, signatureY + 15);
-    doc.line(20, signatureY + 17, 80, signatureY + 17);
+    doc.setFont('Inter', 'normal');
+    doc.text('RECEPCIONADO POR:', 45, signatureY + 15, { align: 'center' });
+    doc.line(20, signatureY + 17, 70, signatureY + 17);
     
-    doc.text('Director Técnico:', 120, signatureY + 15);
-    doc.line(120, signatureY + 17, 180, signatureY + 17);
+    doc.text('DIRECTOR TÉCNICO:', 160, signatureY + 15, { align: 'center' });
+    doc.line(135, signatureY + 17, 185, signatureY + 17);
 
     doc.save(`recepcion_${data.numeroDeFactura}.pdf`);
   };
   
   const columns: { key: keyof Product, label: string, isTextarea?: boolean }[] = [
-      { key: 'nombreDelProductoFarmaceutico', label: 'Nombre del Producto' },
+      { key: 'nombreDelProductoFarmaceutico', label: 'Nombre Producto Farmaceutico' },
+      { key: 'nombreDelDispositivoMedico', label: 'Nombre Dispositivo Médico' },
       { key: 'formaFarmaceutica', label: 'Forma Farmacéutica' },
       { key: 'numeroDeLote', label: 'Nº Lote' },
       { key: 'concentracion', label: 'Concentración' },

@@ -26,6 +26,7 @@ export async function extractAndValidateInvoiceAction(invoiceDataUri: string): P
       invoiceDate: extractedData.fechaDeEmision,
       products: extractedData.productos.map(p => ({
         productName: p.nombreDelProductoFarmaceutico,
+        medicalDeviceName: p.nombreDelDispositivoMedico || '',
         form: p.formaFarmaceutica,
         lotNumber: p.numeroDeLote,
         concentration: p.concentracion,
