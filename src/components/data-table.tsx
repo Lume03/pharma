@@ -204,20 +204,20 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
     doc.save(`recepcion_${data.numeroDeFactura}.pdf`);
   };
   
-  const columns: { key: keyof Product, label: string, isTextarea?: boolean }[] = [
-      { key: 'nombreDelProductoFarmaceutico', label: 'Nombre Producto Farmaceutico' },
-      { key: 'nombreDelDispositivoMedico', label: 'Nombre Dispositivo Médico' },
-      { key: 'formaFarmaceutica', label: 'Forma Farmacéutica' },
-      { key: 'numeroDeLote', label: 'Nº Lote' },
-      { key: 'concentracion', label: 'Concentración' },
-      { key: 'presentacion', label: 'Presentación' },
-      { key: 'fechaDeVencimiento', label: 'F. Vencimiento' },
-      { key: 'registroSanitario', label: 'Reg. Sanitario' },
-      { key: 'cantidadRecibida', label: 'Cant. Recibida' },
-      { key: 'envaseInmediato', label: 'Envase Inmediato' },
-      { key: 'envaseMediato', label: 'Envase Mediato' },
-      { key: 'condicionesDeAlmacenamiento', label: 'Cond. Almacenamiento', isTextarea: true },
-      { key: 'observaciones', label: 'Observaciones', isTextarea: true },
+  const columns: { key: keyof Product, label: string, isTextarea?: boolean, widthClass?: string }[] = [
+      { key: 'nombreDelProductoFarmaceutico', label: 'Nombre Producto Farmaceutico', widthClass: 'min-w-[250px]' },
+      { key: 'nombreDelDispositivoMedico', label: 'Nombre Dispositivo Médico', widthClass: 'min-w-[250px]' },
+      { key: 'formaFarmaceutica', label: 'Forma Farmacéutica', widthClass: 'min-w-[200px]' },
+      { key: 'numeroDeLote', label: 'Nº Lote', widthClass: 'min-w-[180px]' },
+      { key: 'concentracion', label: 'Concentración', widthClass: 'min-w-[150px]' },
+      { key: 'presentacion', label: 'Presentación', widthClass: 'min-w-[150px]' },
+      { key: 'fechaDeVencimiento', label: 'F. Vencimiento', widthClass: 'min-w-[150px]' },
+      { key: 'registroSanitario', label: 'Reg. Sanitario', widthClass: 'min-w-[180px]' },
+      { key: 'cantidadRecibida', label: 'Cant. Recibida', widthClass: 'min-w-[120px]' },
+      { key: 'envaseInmediato', label: 'Envase Inmediato', widthClass: 'min-w-[150px]' },
+      { key: 'envaseMediato', label: 'Envase Mediato', widthClass: 'min-w-[150px]' },
+      { key: 'condicionesDeAlmacenamiento', label: 'Cond. Almacenamiento', isTextarea: true, widthClass: 'min-w-[250px]' },
+      { key: 'observaciones', label: 'Observaciones', isTextarea: true, widthClass: 'min-w-[250px]' },
   ];
 
   return (
@@ -248,7 +248,7 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
             <Table>
               <TableHeader>
                 <TableRow>
-                  {columns.map(c => <TableHead key={c.key}>{c.label}</TableHead>)}
+                  {columns.map(c => <TableHead key={c.key} className={c.widthClass}>{c.label}</TableHead>)}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -261,7 +261,7 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
                         const InputComponent = col.isTextarea ? Textarea : Input;
 
                         return (
-                        <TableCell key={col.key}>
+                        <TableCell key={col.key} className={col.widthClass}>
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <div className="relative">
