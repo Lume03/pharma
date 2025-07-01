@@ -111,27 +111,24 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
     ];
     
     const tableBody = data.productos.map(p => [
-      p.nombreDelProductoFarmaceutico || '-',
-      p.nombreDelDispositivoMedico || '-',
-      p.formaFarmaceutica || '-',
-      p.numeroDeLote || '-',
-      p.concentracion || '-',
-      p.presentacion || '-',
+      p.nombreDelProductoFarmaceutico || '',
+      p.nombreDelDispositivoMedico || '',
+      p.formaFarmaceutica || '',
+      p.numeroDeLote || '',
+      p.concentracion || '',
+      p.presentacion || '',
       p.envaseInmediato ? '✓' : '',
       p.envaseMediato ? '✓' : '',
-      p.fechaDeVencimiento || '-',
-      p.registroSanitario || '-',
-      p.cantidadRecibida || '-',
-      p.condicionesDeAlmacenamiento || '-',
-      p.observaciones || '-',
+      p.fechaDeVencimiento || '',
+      p.registroSanitario || '',
+      p.cantidadRecibida || '',
+      p.condicionesDeAlmacenamiento || '',
+      p.observaciones || '',
     ]);
 
     const requiredRows = 12;
     while (tableBody.length < requiredRows) {
-        tableBody.push(Array(tableHead.length).fill('-'));
-        // Clear checkbox columns for empty rows
-        tableBody[tableBody.length - 1][6] = '';
-        tableBody[tableBody.length - 1][7] = '';
+        tableBody.push(Array(tableHead.length).fill(''));
     }
 
     autoTable(doc, {
