@@ -12,8 +12,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Download, AlertCircle } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { logoBase64 } from '@/lib/logo';
 import { Checkbox } from '@/components/ui/checkbox';
+import Image from 'next/image';
 
 interface DataTableProps {
   initialData: InvoiceData;
@@ -59,7 +59,14 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
     const pageHeight = doc.internal.pageSize.getHeight();
     
     // Header
-    doc.addImage(logoBase64, 'PNG', 15, 8, 20, 20);
+    // To use your own logo:
+    // 1. Create a `public` folder in your project root.
+    // 2. Place your `logo.png` file inside the `public` folder.
+    // The image will be loaded automatically.
+    const logoEl = document.getElementById('company-logo');
+    if (logoEl) {
+      doc.addImage(logoEl as HTMLImageElement, 'PNG', 15, 8, 20, 20);
+    }
 
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
@@ -203,6 +210,18 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
 
   return (
     <TooltipProvider>
+      <Image
+        id="company-logo"
+        src="/logo.png"
+        alt="company logo"
+        width={80}
+        height={80}
+        className="hidden"
+        // Use a placeholder if your logo is not available at /logo.png
+        onError={(e) => {
+          (e.target as HTMLImageElement).src = 'https://placehold.co/80x80.png';
+        }}
+      />
       <Card className="w-full">
         <CardHeader>
           <CardTitle>Formato de Recepción</CardTitle>
