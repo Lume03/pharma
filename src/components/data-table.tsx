@@ -58,11 +58,6 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
     const pageW = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     
-    // Header
-    // To use your own logo:
-    // 1. Create a `public` folder in your project root.
-    // 2. Place your `logo.png` file inside the `public` folder.
-    // The image will be loaded automatically.
     const logoEl = document.getElementById('company-logo');
     if (logoEl) {
       try {
@@ -82,7 +77,6 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
     doc.text('FORMATO DE RECEPCION: F-BFKIDS-10', pageW / 2, 23, { align: 'center' });
 
 
-    // Details section
     const detailsY = 35;
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
@@ -158,18 +152,25 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
           minCellHeight: 8
       },
       styles: { cellPadding: 1 },
-      didParseCell: (data) => {
-        if (data.cell.section === 'body' && (data.column.index === 6 || data.column.index === 7)) {
-          if (data.cell.raw === '✓') {
-            data.cell.styles.fontSize = 12;
-            data.cell.styles.valign = 'middle';
-          }
+      didDrawCell: (data) => {
+        if (data.cell.section === 'body' && (data.column.index === 6 || data.column.index === 7) && data.cell.raw === '✓') {
+          const doc = data.doc as jsPDF;
+          const cell = data.cell;
+          
+          const x = cell.x + cell.width / 2;
+          const y = cell.y + cell.height / 2;
+          
+          doc.setLineWidth(0.4);
+          doc.setDrawColor(0);
+          
+          doc.line(x - 2.5, y, x - 0.5, y + 3);
+          doc.line(x - 0.5, y + 3, x + 2.5, y - 2);
         }
       },
       columnStyles: {
         0: { cellWidth: 30 },
-        1: { cellWidth: 15 },
-        2: { cellWidth: 50 },
+        1: { cellWidth: 10 },
+        2: { cellWidth: 60 },
         3: { cellWidth: 25 },
         4: { cellWidth: 20 },
         5: { cellWidth: 20 },
@@ -178,7 +179,7 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
         8: { cellWidth: 20 },
         9: { cellWidth: 20 },
         10: { cellWidth: 15, halign: 'center' },
-        11: { cellWidth: 15 },
+        11: { cellWidth: 10 },
         12: { cellWidth: 'auto' },
       }
     });
@@ -229,7 +230,6 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
         width={80}
         height={80}
         className="hidden"
-        // Use a placeholder if your logo is not available at /logo.png
         onError={(e) => {
           (e.target as HTMLImageElement).src = 'https://placehold.co/80x80.png';
         }}
