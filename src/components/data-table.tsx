@@ -163,6 +163,7 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
           doc.setLineWidth(0.4);
           doc.setDrawColor(0);
           
+          // Draw a clean, centered checkmark manually
           doc.line(x - 2.5, y, x - 0.5, y + 3);
           doc.line(x - 0.5, y + 3, x + 2.5, y - 2);
         }
