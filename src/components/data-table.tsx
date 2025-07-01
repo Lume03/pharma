@@ -111,24 +111,27 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
     ];
     
     const tableBody = data.productos.map(p => [
-      p.nombreDelProductoFarmaceutico || '',
-      p.nombreDelDispositivoMedico || '',
-      p.formaFarmaceutica || '',
-      p.numeroDeLote || '',
-      p.concentracion || '',
-      p.presentacion || '',
+      p.nombreDelProductoFarmaceutico || '-',
+      p.nombreDelDispositivoMedico || '-',
+      p.formaFarmaceutica || '-',
+      p.numeroDeLote || '-',
+      p.concentracion || '-',
+      p.presentacion || '-',
       p.envaseInmediato ? '✓' : '',
       p.envaseMediato ? '✓' : '',
-      p.fechaDeVencimiento || '',
-      p.registroSanitario || '',
-      p.cantidadRecibida || '',
-      p.condicionesDeAlmacenamiento || '',
-      p.observaciones || '',
+      p.fechaDeVencimiento || '-',
+      p.registroSanitario || '-',
+      p.cantidadRecibida || '-',
+      p.condicionesDeAlmacenamiento || '-',
+      p.observaciones || '-',
     ]);
 
     const requiredRows = 12;
     while (tableBody.length < requiredRows) {
-        tableBody.push(Array(tableHead.length).fill(''));
+        tableBody.push(Array(tableHead.length).fill('-'));
+        // Clear checkbox columns for empty rows
+        tableBody[tableBody.length - 1][6] = '';
+        tableBody[tableBody.length - 1][7] = '';
     }
 
     autoTable(doc, {
@@ -152,35 +155,35 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
           minCellHeight: 8
       },
       styles: { cellPadding: 1 },
+      willDrawCell: (data) => {
+        if (data.cell.section === 'body' && (data.column.index === 6 || data.column.index === 7) && data.cell.raw === '✓') {
+          data.cell.text = []; // Clear the text to prevent drawing the '✓' character
+        }
+      },
       didDrawCell: (data) => {
         if (data.cell.section === 'body' && (data.column.index === 6 || data.column.index === 7) && data.cell.raw === '✓') {
           const doc = data.doc as jsPDF;
           const cell = data.cell;
-          
           const x = cell.x + cell.width / 2;
           const y = cell.y + cell.height / 2;
-          
           doc.setLineWidth(0.4);
-          doc.setDrawColor(0);
-          
-          // Draw a clean, centered checkmark manually
-          doc.line(x - 2.5, y, x - 0.5, y + 3);
-          doc.line(x - 0.5, y + 3, x + 2.5, y - 2);
+          doc.line(x - 1.5, y, x, y + 1.5);
+          doc.line(x, y + 1.5, x + 2.5, y - 1.5);
         }
       },
       columnStyles: {
         0: { cellWidth: 30 },
         1: { cellWidth: 10 },
         2: { cellWidth: 60 },
-        3: { cellWidth: 25 },
-        4: { cellWidth: 20 },
-        5: { cellWidth: 20 },
+        3: { cellWidth: 25, halign: 'center' },
+        4: { cellWidth: 20, halign: 'center' },
+        5: { cellWidth: 20, halign: 'center' },
         6: { cellWidth: 15, halign: 'center' },
         7: { cellWidth: 15, halign: 'center' },
-        8: { cellWidth: 20 },
-        9: { cellWidth: 20 },
+        8: { cellWidth: 20, halign: 'center' },
+        9: { cellWidth: 20, halign: 'center' },
         10: { cellWidth: 15, halign: 'center' },
-        11: { cellWidth: 10 },
+        11: { cellWidth: 10, halign: 'center' },
         12: { cellWidth: 'auto' },
       }
     });
