@@ -54,156 +54,158 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
   };
 
   const generatePdf = () => {
-    const doc = new jsPDF({ orientation: 'landscape' });
-    const pageW = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    
-    const logoEl = document.getElementById('company-logo');
-    if (logoEl) {
-      try {
-        doc.addImage(logoEl as HTMLImageElement, 'PNG', 15, 8, 20, 20);
-      } catch (e) {
-        console.error("Error adding logo image to PDF:", e)
-      }
-    }
+    const products = data.productos;
+    const chunkSize = 12;
+    const numDocuments = products.length > 0 ? Math.ceil(products.length / chunkSize) : 1;
 
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('BOTICA FARMA KIDS', pageW / 2, 12, { align: 'center' });
-    
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.text('POES 1: RECEPCION DE PRODUCTOS FARMACEUTICOS, DISPOSITIVOS MEDICOS Y PRODUCTOS SANITARIOS', pageW / 2, 18, { align: 'center' });
-    doc.text('FORMATO DE RECEPCION: F-BFKIDS-10', pageW / 2, 23, { align: 'center' });
-
-
-    const detailsY = 35;
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text('PROVEEDOR:', 15, detailsY);
-    doc.text('N° DE FACTURA:', 15, detailsY + 7);
-    doc.text('FECHA:', pageW - 60, detailsY);
-
-    doc.setFont('helvetica', 'normal');
-    doc.text(data.proveedor, 50, detailsY);
-    doc.text(data.numeroDeFactura, 50, detailsY + 7);
-    doc.text(data.fechaDeEmision, pageW - 40, detailsY);
-
-    doc.setDrawColor(0);
-    doc.line(48, detailsY + 1, pageW / 2, detailsY + 1);
-    doc.line(48, detailsY + 8, pageW / 2, detailsY + 8);
-    doc.line(pageW - 38, detailsY + 1, pageW - 15, detailsY + 1);
-
-    const tableHead = [
-      'NOMBRE DEL PRODUCTO FARMACEUTICO',
-      'NOMBRE DEL DISPOSITIVO MEDICO',
-      'FORMA FARMACEUTICA',
-      'N° DE LOTE',
-      'CONCENTRACION',
-      'PRESENTACION',
-      'ENVASE INMEDIATO',
-      'ENVASE MEDIATO',
-      'FECHA DE VENCIMIENTO',
-      'REGISTRO SANITARIO',
-      'CANTIDAD RECIBIDA',
-      'CONDICIONES DE ALMACENAMIENTO',
-      'OBSERVACIONES',
-    ];
-    
-    const tableBody = data.productos.map(p => [
-      p.nombreDelProductoFarmaceutico || '',
-      p.nombreDelDispositivoMedico || '',
-      p.formaFarmaceutica || '',
-      p.numeroDeLote || '',
-      p.concentracion || '',
-      p.presentacion || '',
-      p.envaseInmediato ? '✓' : '',
-      p.envaseMediato ? '✓' : '',
-      p.fechaDeVencimiento || '',
-      p.registroSanitario || '',
-      p.cantidadRecibida || '',
-      p.condicionesDeAlmacenamiento || '',
-      p.observaciones || '',
-    ]);
-
-    const requiredRows = 12;
-    while (tableBody.length < requiredRows) {
-        tableBody.push(Array(tableHead.length).fill(''));
-    }
-
-    autoTable(doc, {
-      head: [tableHead],
-      body: tableBody,
-      startY: detailsY + 15,
-      theme: 'grid',
-      headStyles: { 
-          fillColor: '#FFFFFF', 
-          textColor: 0, 
-          fontSize: 6,
-          lineWidth: 0.1,
-          lineColor: [0, 0, 0],
-          halign: 'center',
-          valign: 'middle'
-      },
-      bodyStyles: { 
-          fontSize: 7,
-          lineWidth: 0.1,
-          lineColor: [0, 0, 0],
-          minCellHeight: 8
-      },
-      styles: { cellPadding: 1 },
-      willDrawCell: (data) => {
-        if (data.cell.section === 'body' && (data.column.index === 6 || data.column.index === 7) && data.cell.raw === '✓') {
-          data.cell.text = []; // Clear the text to prevent drawing the '✓' character
+    for (let i = 0; i < numDocuments; i++) {
+        const doc = new jsPDF({ orientation: 'landscape' });
+        const pageW = doc.internal.pageSize.getWidth();
+        
+        const logoEl = document.getElementById('company-logo');
+        if (logoEl) {
+          try {
+            doc.addImage(logoEl as HTMLImageElement, 'PNG', 15, 8, 20, 20);
+          } catch (e) {
+            console.error("Error adding logo image to PDF:", e)
+          }
         }
-      },
-      didDrawCell: (data) => {
-        if (data.cell.section === 'body' && (data.column.index === 6 || data.column.index === 7) && data.cell.raw === '✓') {
-          const doc = data.doc as jsPDF;
-          const cell = data.cell;
-          const x = cell.x + cell.width / 2;
-          const y = cell.y + cell.height / 2;
-          doc.setLineWidth(0.4);
-          doc.line(x - 1.5, y, x, y + 1.5);
-          doc.line(x, y + 1.5, x + 2.5, y - 1.5);
+
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('BOTICA FARMA KIDS', pageW / 2, 12, { align: 'center' });
+        
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text('POES 1: RECEPCION DE PRODUCTOS FARMACEUTICOS, DISPOSITIVOS MEDICOS Y PRODUCTOS SANITARIOS', pageW / 2, 18, { align: 'center' });
+        doc.text('FORMATO DE RECEPCION: F-BFKIDS-10', pageW / 2, 23, { align: 'center' });
+
+
+        const detailsY = 35;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('PROVEEDOR:', 15, detailsY);
+        doc.text('N° DE FACTURA:', 15, detailsY + 7);
+        doc.text('FECHA:', pageW - 60, detailsY);
+
+        doc.setFont('helvetica', 'normal');
+        doc.text(data.proveedor, 50, detailsY);
+        doc.text(data.numeroDeFactura, 50, detailsY + 7);
+        doc.text(data.fechaDeEmision, pageW - 40, detailsY);
+
+        doc.setDrawColor(0);
+        doc.line(48, detailsY + 1, pageW / 2, detailsY + 1);
+        doc.line(48, detailsY + 8, pageW / 2, detailsY + 8);
+        doc.line(pageW - 38, detailsY + 1, pageW - 15, detailsY + 1);
+
+        const tableHead = [
+          'NOMBRE DEL PRODUCTO FARMACEUTICO',
+          'NOMBRE DEL DISPOSITIVO MEDICO',
+          'FORMA FARMACEUTICA',
+          'N° DE LOTE',
+          'CONCENTRACION',
+          'PRESENTACION',
+          'ENVASE INMEDIATO',
+          'ENVASE MEDIATO',
+          'FECHA DE VENCIMIENTO',
+          'REGISTRO SANITARIO',
+          'CANTIDAD RECIBIDA',
+          'CONDICIONES DE ALMACENAMIENTO',
+          'OBSERVACIONES',
+        ];
+        
+        const productChunk = products.slice(i * chunkSize, (i + 1) * chunkSize);
+        
+        const tableBody = productChunk.map(p => [
+          p.nombreDelProductoFarmaceutico || '',
+          p.nombreDelDispositivoMedico || '',
+          p.formaFarmaceutica || '',
+          p.numeroDeLote || '',
+          p.concentracion || '',
+          p.presentacion || '',
+          p.envaseInmediato ? '✓' : '',
+          p.envaseMediato ? '✓' : '',
+          p.fechaDeVencimiento || '',
+          p.registroSanitario || '',
+          p.cantidadRecibida || '',
+          p.condicionesDeAlmacenamiento || '',
+          p.observaciones || '',
+        ]);
+
+        const requiredRows = 12;
+        while (tableBody.length < requiredRows) {
+            tableBody.push(Array(tableHead.length).fill(''));
         }
-      },
-      columnStyles: {
-        0: { cellWidth: 30 },
-        1: { cellWidth: 10 },
-        2: { cellWidth: 60 },
-        3: { cellWidth: 25, halign: 'center' },
-        4: { cellWidth: 20, halign: 'center' },
-        5: { cellWidth: 20, halign: 'center' },
-        6: { cellWidth: 15, halign: 'center' },
-        7: { cellWidth: 15, halign: 'center' },
-        8: { cellWidth: 20, halign: 'center' },
-        9: { cellWidth: 20, halign: 'center' },
-        10: { cellWidth: 15, halign: 'center' },
-        11: { cellWidth: 10, halign: 'center' },
-        12: { cellWidth: 'auto' },
-      }
-    });
-    
-    const finalY = (doc as any).lastAutoTable.finalY;
-    let signatureY = finalY + 20;
 
-    if (finalY > pageHeight - 35) {
-      doc.addPage();
-      signatureY = 30;
+        autoTable(doc, {
+          head: [tableHead],
+          body: tableBody,
+          startY: detailsY + 15,
+          theme: 'grid',
+          headStyles: { 
+              fillColor: '#FFFFFF', 
+              textColor: 0, 
+              fontSize: 6,
+              lineWidth: 0.1,
+              lineColor: [0, 0, 0],
+              halign: 'center',
+              valign: 'middle'
+          },
+          bodyStyles: { 
+              fontSize: 7,
+              lineWidth: 0.1,
+              lineColor: [0, 0, 0],
+              minCellHeight: 8
+          },
+          styles: { cellPadding: 1 },
+          willDrawCell: (data) => {
+            if (data.cell.section === 'body' && (data.column.index === 6 || data.column.index === 7) && data.cell.raw === '✓') {
+              data.cell.text = []; // Clear the text to prevent drawing the '✓' character
+            }
+          },
+          didDrawCell: (data) => {
+            if (data.cell.section === 'body' && (data.column.index === 6 || data.column.index === 7) && data.cell.raw === '✓') {
+              const doc = data.doc as jsPDF;
+              const cell = data.cell;
+              const x = cell.x + cell.width / 2;
+              const y = cell.y + cell.height / 2;
+              doc.setLineWidth(0.4);
+              doc.line(x - 1.5, y, x, y + 1.5);
+              doc.line(x, y + 1.5, x + 2.5, y - 1.5);
+            }
+          },
+          columnStyles: {
+            0: { cellWidth: 30 },
+            1: { cellWidth: 10 },
+            2: { cellWidth: 60 },
+            3: { cellWidth: 25, halign: 'center' },
+            4: { cellWidth: 20, halign: 'center' },
+            5: { cellWidth: 20, halign: 'center' },
+            6: { cellWidth: 15, halign: 'center' },
+            7: { cellWidth: 15, halign: 'center' },
+            8: { cellWidth: 20, halign: 'center' },
+            9: { cellWidth: 20, halign: 'center' },
+            10: { cellWidth: 15, halign: 'center' },
+            11: { cellWidth: 10, halign: 'center' },
+            12: { cellWidth: 'auto' },
+          }
+        });
+        
+        const finalY = (doc as any).lastAutoTable.finalY;
+        const signatureY = finalY + 20;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        
+        doc.line(20, signatureY, 80, signatureY);
+        doc.text('RECEPCIONADO POR:', 50, signatureY + 5, { align: 'center' });
+        
+        doc.line(pageW - 80, signatureY, pageW - 20, signatureY);
+        doc.text('DIRECTOR TECNICO:', pageW - 50, signatureY + 5, { align: 'center' });
+
+        const pageSuffix = numDocuments > 1 ? `_parte_${i + 1}` : '';
+        doc.save(`recepcion_${data.numeroDeFactura}${pageSuffix}.pdf`);
     }
-    
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    
-    doc.line(20, signatureY, 80, signatureY);
-    doc.text('RECEPCIONADO POR:', 50, signatureY + 5, { align: 'center' });
-    
-    doc.line(pageW - 80, signatureY, pageW - 20, signatureY);
-    doc.text('DIRECTOR TECNICO:', pageW - 50, signatureY + 5, { align: 'center' });
-
-
-    doc.save(`recepcion_${data.numeroDeFactura}.pdf`);
   };
   
   const columns: { key: keyof Product, label: string, isTextarea?: boolean, isCheckbox?: boolean, widthClass?: string }[] = [
