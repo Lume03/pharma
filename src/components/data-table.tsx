@@ -56,9 +56,10 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
   const generatePdf = () => {
     const doc = new jsPDF({ orientation: 'landscape' });
     const pageW = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
     
     // Header
-    doc.addImage(logoBase64, 'SVG', 15, 8, 20, 20);
+    doc.addImage(logoBase64, 'PNG', 15, 8, 20, 20);
 
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
