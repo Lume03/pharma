@@ -65,7 +65,11 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
     // The image will be loaded automatically.
     const logoEl = document.getElementById('company-logo');
     if (logoEl) {
-      doc.addImage(logoEl as HTMLImageElement, 'PNG', 15, 8, 20, 20);
+      try {
+        doc.addImage(logoEl as HTMLImageElement, 'PNG', 15, 8, 20, 20);
+      } catch (e) {
+        console.error("Error adding logo image to PDF:", e)
+      }
     }
 
     doc.setFontSize(12);
@@ -128,7 +132,7 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
       p.observaciones || '',
     ]);
 
-    const requiredRows = 15;
+    const requiredRows = 12;
     while (tableBody.length < requiredRows) {
         tableBody.push(Array(tableHead.length).fill(''));
     }
@@ -154,10 +158,18 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
           minCellHeight: 8
       },
       styles: { cellPadding: 1 },
+      didParseCell: (data) => {
+        if (data.cell.section === 'body' && (data.column.index === 6 || data.column.index === 7)) {
+          if (data.cell.raw === '✓') {
+            data.cell.styles.fontSize = 12;
+            data.cell.styles.valign = 'middle';
+          }
+        }
+      },
       columnStyles: {
         0: { cellWidth: 30 },
-        1: { cellWidth: 30 },
-        2: { cellWidth: 25 },
+        1: { cellWidth: 15 },
+        2: { cellWidth: 50 },
         3: { cellWidth: 25 },
         4: { cellWidth: 20 },
         5: { cellWidth: 20 },
@@ -166,7 +178,7 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
         8: { cellWidth: 20 },
         9: { cellWidth: 20 },
         10: { cellWidth: 15, halign: 'center' },
-        11: { cellWidth: 25 },
+        11: { cellWidth: 15 },
         12: { cellWidth: 'auto' },
       }
     });
@@ -195,7 +207,7 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
   const columns: { key: keyof Product, label: string, isTextarea?: boolean, isCheckbox?: boolean, widthClass?: string }[] = [
       { key: 'nombreDelProductoFarmaceutico', label: 'Nombre Producto Farmaceutico', isTextarea: true, widthClass: 'min-w-[250px]' },
       { key: 'nombreDelDispositivoMedico', label: 'Nombre Dispositivo Médico', isTextarea: true, widthClass: 'min-w-[250px]' },
-      { key: 'formaFarmaceutica', label: 'Forma Farmacéutica', isTextarea: true, widthClass: 'min-w-[200px]' },
+      { key: 'formaFarmaceutica', label: 'Forma Farmacéutica', isTextarea: true, widthClass: 'min-w-[250px]' },
       { key: 'numeroDeLote', label: 'Nº Lote', isTextarea: true, widthClass: 'min-w-[180px]' },
       { key: 'concentracion', label: 'Concentración', isTextarea: true, widthClass: 'min-w-[150px]' },
       { key: 'presentacion', label: 'Presentación', isTextarea: true, widthClass: 'min-w-[150px]' },
