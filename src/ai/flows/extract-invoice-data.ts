@@ -30,8 +30,6 @@ const InvoiceItemSchema = z.object({
   fechaDeVencimiento: z.string().describe('Fecha de vencimiento (YYYY-MM-DD).'),
   registroSanitario: z.string().optional().describe('Número de registro sanitario.'),
   cantidadRecibida: z.string().describe('Cantidad recibida.'),
-  envaseInmediato: z.string().optional().describe('Condiciones del envase inmediato.'),
-  envaseMediato: z.string().optional().describe('Condiciones del envase mediato.'),
   condicionesDeAlmacenamiento: z.string().optional().describe('Condiciones de almacenamiento.'),
   observaciones: z.string().optional().describe('Observaciones.'),
 });
@@ -75,8 +73,6 @@ Para cada factura, extrae:
     - Fecha de Vencimiento (fechaDeVencimiento)
     - Registro Sanitario (registroSanitario) - Si está disponible
     - Cantidad Recibida (cantidadRecibida)
-    - Envase Inmediato (envaseInmediato) - Si está disponible
-    - Envase Mediato (envaseMediato) - Si está disponible
     - Condiciones de Almacenamiento (condicionesDeAlmacenamiento) - Si está disponible
     - Observaciones (observaciones) - Si está disponible
 

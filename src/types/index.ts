@@ -8,9 +8,8 @@ export interface Product {
   fechaDeVencimiento: string;
   registroSanitario?: string;
   cantidadRecibida: string;
-  // Añadir los campos manuales del formulario
-  envaseInmediato?: string;
-  envaseMediato?: string;
+  envaseInmediato?: boolean;
+  envaseMediato?: boolean;
   condicionesDeAlmacenamiento?: string;
   observaciones?: string;
 }

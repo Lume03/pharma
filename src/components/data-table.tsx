@@ -12,6 +12,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Download, AlertCircle } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { logoBase64 } from '@/lib/logo';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface DataTableProps {
   initialData: InvoiceData;
@@ -41,7 +43,7 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
     return map;
   }, [initialValidationErrors]);
 
-  const handleInputChange = (rowIndex: number, field: keyof Product, value: string) => {
+  const handleInputChange = (rowIndex: number, field: keyof Product, value: string | boolean) => {
     const updatedProducts = [...data.productos];
     updatedProducts[rowIndex] = { ...updatedProducts[rowIndex], [field]: value };
     setData({ ...data, productos: updatedProducts });
@@ -55,59 +57,36 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
     const doc = new jsPDF({ orientation: 'landscape' });
     const pageW = doc.internal.pageSize.getWidth();
     
-    // Header section
-    doc.setFontSize(14);
-    doc.setFont('Inter', 'bold');
-    doc.text('BOTICA', 20, 15);
-    doc.text('FARMA KIDS', 20, 21);
-    doc.setFontSize(8);
-    doc.setFont('Inter', 'normal');
-    doc.text('Profesionales a su servicio', 20, 26);
-    doc.setDrawColor(100, 181, 246);
-    doc.setLineWidth(0.5);
-    doc.rect(15, 8, 50, 22);
-    doc.line(15, 23, 65, 23);
+    // Header
+    doc.addImage(logoBase64, 'SVG', 15, 8, 20, 20);
 
     doc.setFontSize(12);
-    doc.setFont('Inter', 'bold');
-    doc.text('BOTICA F-KIDS', pageW - 70, 15, { align: 'center' });
-
-    doc.setFontSize(9);
-    doc.setFont('Inter', 'normal');
-    doc.text('POE BFKIDS-10: RECEPCIÓN DE PRODUCTOS FARMACÉUTICOS, DISPOSITIVOS MÉDICOS Y PRODUCTOS SANITARIOS', pageW - 70, 22, { align: 'center', maxWidth: 120 });
+    doc.setFont('helvetica', 'bold');
+    doc.text('BOTICA FARMA KIDS', pageW / 2, 12, { align: 'center' });
     
-    autoTable(doc, {
-        body: [[
-            { content: 'FORMATO DE RECEPCIÓN: F-BFKIDS-10', styles: { fontStyle: 'bold' } },
-            { content: 'VERSION: 00', styles: { fontStyle: 'bold' } }
-        ]],
-        startY: 25,
-        theme: 'plain',
-        styles: { cellPadding: 1, fontSize: 9 },
-        tableWidth: 'wrap',
-        margin: { left: pageW - 120 }
-    });
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text('POES 1: RECEPCION DE PRODUCTOS FARMACEUTICOS, DISPOSITIVOS MEDICOS Y PRODUCTOS SANITARIOS', pageW / 2, 18, { align: 'center' });
+    doc.text('FORMATO DE RECEPCION: F-BFKIDS-10', pageW / 2, 23, { align: 'center' });
+
 
     // Details section
-    autoTable(doc, {
-      body: [
-        [
-            { content: `PROVEEDOR: ${data.proveedor}`, styles: { fontStyle: 'bold' } },
-            { content: `FECHA: ${data.fechaDeEmision}`, styles: { fontStyle: 'bold' } }
-        ],
-        [
-            { content: `N° DE FACTURA: ${data.numeroDeFactura}`, styles: { fontStyle: 'bold' } },
-            { content: '' }
-        ]
-      ],
-      startY: (doc as any).lastAutoTable.finalY + 2,
-      theme: 'plain',
-      styles: { cellPadding: 0.5, fontSize: 10 },
-      columnStyles: {
-        0: { cellWidth: 180 },
-        1: { cellWidth: 'auto' }
-      }
-    });
+    const detailsY = 35;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('PROVEEDOR:', 15, detailsY);
+    doc.text('N° DE FACTURA:', 15, detailsY + 7);
+    doc.text('FECHA:', pageW - 60, detailsY);
+
+    doc.setFont('helvetica', 'normal');
+    doc.text(data.proveedor, 50, detailsY);
+    doc.text(data.numeroDeFactura, 50, detailsY + 7);
+    doc.text(data.fechaDeEmision, pageW - 40, detailsY);
+
+    doc.setDrawColor(0);
+    doc.line(48, detailsY + 1, pageW / 2, detailsY + 1);
+    doc.line(48, detailsY + 8, pageW / 2, detailsY + 8);
+    doc.line(pageW - 38, detailsY + 1, pageW - 15, detailsY + 1);
 
     const tableHead = [
       'NOMBRE DEL PRODUCTO FARMACEUTICO',
@@ -120,7 +99,7 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
       'ENVASE MEDIATO',
       'FECHA DE VENCIMIENTO',
       'REGISTRO SANITARIO',
-      'CANT. RECIBIDA',
+      'CANTIDAD RECIBIDA',
       'CONDICIONES DE ALMACENAMIENTO',
       'OBSERVACIONES',
     ];
@@ -132,8 +111,8 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
       p.numeroDeLote || '',
       p.concentracion || '',
       p.presentacion || '',
-      p.envaseInmediato || '',
-      p.envaseMediato || '',
+      p.envaseInmediato ? '✓' : '',
+      p.envaseMediato ? '✓' : '',
       p.fechaDeVencimiento || '',
       p.registroSanitario || '',
       p.cantidadRecibida || '',
@@ -141,7 +120,7 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
       p.observaciones || '',
     ]);
 
-    const requiredRows = 10;
+    const requiredRows = 15;
     while (tableBody.length < requiredRows) {
         tableBody.push(Array(tableHead.length).fill(''));
     }
@@ -149,7 +128,7 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
     autoTable(doc, {
       head: [tableHead],
       body: tableBody,
-      startY: (doc as any).lastAutoTable.finalY + 2,
+      startY: detailsY + 15,
       theme: 'grid',
       headStyles: { 
           fillColor: '#FFFFFF', 
@@ -172,21 +151,20 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
         1: { cellWidth: 30 },
         2: { cellWidth: 25 },
         3: { cellWidth: 25 },
-        4: { cellWidth: 15 },
-        5: { cellWidth: 15 },
-        6: { cellWidth: 12 },
-        7: { cellWidth: 12 },
-        8: { cellWidth: 15 },
+        4: { cellWidth: 20 },
+        5: { cellWidth: 20 },
+        6: { cellWidth: 15, halign: 'center' },
+        7: { cellWidth: 15, halign: 'center' },
+        8: { cellWidth: 20 },
         9: { cellWidth: 20 },
-        10: { cellWidth: 10 },
+        10: { cellWidth: 15, halign: 'center' },
         11: { cellWidth: 25 },
         12: { cellWidth: 'auto' },
       }
     });
     
     const finalY = (doc as any).lastAutoTable.finalY;
-    const pageHeight = doc.internal.pageSize.getHeight();
-    let signatureY = finalY + 15;
+    let signatureY = finalY + 20;
 
     if (finalY > pageHeight - 35) {
       doc.addPage();
@@ -194,28 +172,30 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
     }
     
     doc.setFontSize(10);
-    doc.setFont('Inter', 'normal');
-    doc.text('RECEPCIONADO POR:', 45, signatureY + 15, { align: 'center' });
-    doc.line(20, signatureY + 17, 70, signatureY + 17);
+    doc.setFont('helvetica', 'normal');
     
-    doc.text('DIRECTOR TÉCNICO:', pageW - 45, signatureY + 15, { align: 'center' });
-    doc.line(pageW - 70, signatureY + 17, pageW - 20, signatureY + 17);
+    doc.line(20, signatureY, 80, signatureY);
+    doc.text('RECEPCIONADO POR:', 50, signatureY + 5, { align: 'center' });
+    
+    doc.line(pageW - 80, signatureY, pageW - 20, signatureY);
+    doc.text('DIRECTOR TECNICO:', pageW - 50, signatureY + 5, { align: 'center' });
+
 
     doc.save(`recepcion_${data.numeroDeFactura}.pdf`);
   };
   
-  const columns: { key: keyof Product, label: string, isTextarea?: boolean, widthClass?: string }[] = [
+  const columns: { key: keyof Product, label: string, isTextarea?: boolean, isCheckbox?: boolean, widthClass?: string }[] = [
       { key: 'nombreDelProductoFarmaceutico', label: 'Nombre Producto Farmaceutico', isTextarea: true, widthClass: 'min-w-[250px]' },
       { key: 'nombreDelDispositivoMedico', label: 'Nombre Dispositivo Médico', isTextarea: true, widthClass: 'min-w-[250px]' },
       { key: 'formaFarmaceutica', label: 'Forma Farmacéutica', isTextarea: true, widthClass: 'min-w-[200px]' },
       { key: 'numeroDeLote', label: 'Nº Lote', isTextarea: true, widthClass: 'min-w-[180px]' },
       { key: 'concentracion', label: 'Concentración', isTextarea: true, widthClass: 'min-w-[150px]' },
       { key: 'presentacion', label: 'Presentación', isTextarea: true, widthClass: 'min-w-[150px]' },
+      { key: 'envaseInmediato', label: 'Env. Inmediato', isCheckbox: true, widthClass: 'min-w-[120px]' },
+      { key: 'envaseMediato', label: 'Env. Mediato', isCheckbox: true, widthClass: 'min-w-[120px]' },
       { key: 'fechaDeVencimiento', label: 'F. Vencimiento', isTextarea: true, widthClass: 'min-w-[150px]' },
       { key: 'registroSanitario', label: 'Reg. Sanitario', isTextarea: true, widthClass: 'min-w-[180px]' },
       { key: 'cantidadRecibida', label: 'Cant. Recibida', widthClass: 'min-w-[120px]' },
-      { key: 'envaseInmediato', label: 'Envase Inmediato', isTextarea: true, widthClass: 'min-w-[150px]' },
-      { key: 'envaseMediato', label: 'Envase Mediato', isTextarea: true, widthClass: 'min-w-[150px]' },
       { key: 'condicionesDeAlmacenamiento', label: 'Cond. Almacenamiento', isTextarea: true, widthClass: 'min-w-[250px]' },
       { key: 'observaciones', label: 'Observaciones', isTextarea: true, widthClass: 'min-w-[250px]' },
   ];
@@ -255,6 +235,19 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
                 {data.productos.map((product, rowIndex) => (
                   <TableRow key={rowIndex}>
                     {columns.map(col => {
+                        if (col.isCheckbox) {
+                           return (
+                                <TableCell key={col.key} className={`${col.widthClass} text-center`}>
+                                    <div className="flex justify-center">
+                                      <Checkbox
+                                          checked={!!product[col.key]}
+                                          onCheckedChange={(checked) => handleInputChange(rowIndex, col.key, !!checked)}
+                                      />
+                                    </div>
+                                </TableCell>
+                           )
+                        }
+                        
                         const fieldKey = col.key as keyof typeof keyMap;
                         const errorKey = `products.${rowIndex}.${keyMap[fieldKey]}`;
                         const error = errorMap[errorKey];
@@ -275,7 +268,7 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
                                 <TooltipTrigger asChild>
                                     <div className="relative">
                                     <InputComponent
-                                        value={product[col.key] || ''}
+                                        value={product[col.key] as string || ''}
                                         onChange={(e) => handleInputChange(rowIndex, col.key, e.target.value)}
                                         onBlur={handleBlur}
                                         className={error ? 'border-destructive ring-destructive ring-1' : ''}
