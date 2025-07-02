@@ -161,7 +161,7 @@ export default function Home() {
 
                 {processedInvoices.map((invoice, index) => (
                     <DataTable
-                        key={invoice.data.numeroDeFactura || index}
+                        key={`${invoice.data.numeroDeFactura || 'invoice'}-${index}`}
                         initialData={invoice.data}
                         initialValidationErrors={invoice.errors}
                     />
