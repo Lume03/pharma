@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Download, AlertCircle } from 'lucide-react';
@@ -54,29 +54,25 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
     let startX: number;
     let scrollLeft: number;
 
-    const handleMouseDown = (e: MouseEvent) => {
+    const handlePointerDown = (e: PointerEvent) => {
       const target = e.target as HTMLElement;
       // Do not start drag if the user is interacting with an input, textarea, or checkbox
       if (
         target.tagName === 'INPUT' ||
         target.tagName === 'TEXTAREA' ||
-        target.closest('[role="checkbox"]')
+        target.closest('button[role="checkbox"]')
       ) {
         return;
       }
       
       isDown = true;
+      slider.setPointerCapture(e.pointerId);
       slider.style.cursor = 'grabbing';
       startX = e.pageX;
       scrollLeft = slider.scrollLeft;
-
-      // Add move and up listeners to the whole window
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
     };
 
-
-    const handleMouseMove = (e: MouseEvent) => {
+    const handlePointerMove = (e: PointerEvent) => {
       if (!isDown) return;
       e.preventDefault();
       const x = e.pageX;
@@ -84,27 +80,25 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
       slider.scrollLeft = scrollLeft - walk;
     };
 
-    const handleMouseUp = () => {
+    const handlePointerUp = (e: PointerEvent) => {
+      if (!isDown) return;
       isDown = false;
-      if (slider) {
-        slider.style.cursor = 'grab';
-      }
-
-      // Remove move and up listeners from the whole window
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      slider.releasePointerCapture(e.pointerId);
+      slider.style.cursor = 'grab';
     };
 
-    slider.addEventListener('mousedown', handleMouseDown);
+    slider.addEventListener('pointerdown', handlePointerDown);
+    slider.addEventListener('pointermove', handlePointerMove);
+    slider.addEventListener('pointerup', handlePointerUp);
+    slider.addEventListener('pointerleave', handlePointerUp); // Also end on leave/out
 
     return () => {
-      // Cleanup mousedown listener
       if (slider) {
-        slider.removeEventListener('mousedown', handleMouseDown);
+        slider.removeEventListener('pointerdown', handlePointerDown);
+        slider.removeEventListener('pointermove', handlePointerMove);
+        slider.removeEventListener('pointerup', handlePointerUp);
+        slider.removeEventListener('pointerleave', handlePointerUp);
       }
-      // Cleanup window listeners in case the component unmounts mid-drag
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
     };
   }, []);
 
@@ -230,7 +224,6 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
           },
           didDrawCell: (data) => {
             if (data.cell.section === 'body' && (data.column.index === 6 || data.column.index === 7) && data.cell.raw === '✓') {
-              const doc = data.doc as jsPDF;
               const cell = data.cell;
               const x = cell.x + cell.width / 2;
               const y = cell.y + cell.height / 2;
@@ -325,8 +318,8 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto" ref={scrollContainerRef}>
-            <Table>
+          <div className="relative w-full overflow-auto" ref={scrollContainerRef}>
+            <table className="w-full caption-bottom text-sm">
               <TableHeader>
                 <TableRow>
                   {columns.map(c => <TableHead key={c.key} className={c.widthClass}>{c.label}</TableHead>)}
@@ -385,7 +378,7 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
+            </table>
           </div>
         </CardContent>
         <CardFooter className="flex justify-end gap-2">
