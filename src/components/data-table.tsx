@@ -14,6 +14,14 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 
 interface DataTableProps {
   initialData: InvoiceData;
@@ -35,6 +43,7 @@ const keyMap: { [K in keyof Omit<Product, 'envaseInmediato' | 'envaseMediato' | 
 export function DataTable({ initialData, initialValidationErrors }: DataTableProps) {
   const [data, setData] = useState<InvoiceData>(initialData);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [selectedPharmacy, setSelectedPharmacy] = useState('BOTICA FARMA KIDS');
 
   const errorMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -56,7 +65,6 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
 
     const handlePointerDown = (e: PointerEvent) => {
       const target = e.target as HTMLElement;
-      // Do not start drag if the user is interacting with an input, textarea, or checkbox
       if (
         target.tagName === 'INPUT' ||
         target.tagName === 'TEXTAREA' ||
@@ -76,7 +84,7 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
       if (!isDown) return;
       e.preventDefault();
       const x = e.pageX;
-      const walk = (x - startX) * 2; // The multiplier makes scrolling faster
+      const walk = (x - startX) * 2;
       slider.scrollLeft = scrollLeft - walk;
     };
 
@@ -90,7 +98,7 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
     slider.addEventListener('pointerdown', handlePointerDown);
     slider.addEventListener('pointermove', handlePointerMove);
     slider.addEventListener('pointerup', handlePointerUp);
-    slider.addEventListener('pointerleave', handlePointerUp); // Also end on leave/out
+    slider.addEventListener('pointerleave', handlePointerUp);
 
     return () => {
       if (slider) {
@@ -121,7 +129,8 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
         const doc = new jsPDF({ orientation: 'landscape' });
         const pageW = doc.internal.pageSize.getWidth();
         
-        const logoEl = document.getElementById('company-logo');
+        const logoId = selectedPharmacy === 'BOTICA FARMA KIDS' ? 'farma-kids-logo' : 't-pharma-logo';
+        const logoEl = document.getElementById(logoId);
         if (logoEl) {
           try {
             doc.addImage(logoEl as HTMLImageElement, 'PNG', 15, 8, 20, 20);
@@ -132,12 +141,14 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
 
         doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
-        doc.text('BOTICA FARMA KIDS', pageW / 2, 12, { align: 'center' });
+        doc.text(selectedPharmacy, pageW / 2, 12, { align: 'center' });
         
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
         doc.text('POES 1: RECEPCION DE PRODUCTOS FARMACEUTICOS, DISPOSITIVOS MEDICOS Y PRODUCTOS SANITARIOS', pageW / 2, 18, { align: 'center' });
-        doc.text('FORMATO DE RECEPCION: F-BFKIDS-10', pageW / 2, 23, { align: 'center' });
+
+        const formatCode = selectedPharmacy === 'BOTICA FARMA KIDS' ? 'F-BFKIDS-10' : 'F-BTPHARMA-10';
+        doc.text(`FORMATO DE RECEPCION: ${formatCode}`, pageW / 2, 23, { align: 'center' });
 
 
         const detailsY = 35;
@@ -175,21 +186,28 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
         
         const productChunk = products.slice(i * chunkSize, (i + 1) * chunkSize);
         
-        const tableBody = productChunk.map(p => [
-          p.nombreDelProductoFarmaceutico || '',
-          p.nombreDelDispositivoMedico || '',
-          p.formaFarmaceutica || '',
-          p.numeroDeLote || '',
-          p.concentracion || '',
-          p.presentacion || '',
-          p.envaseInmediato ? '✓' : '',
-          p.envaseMediato ? '✓' : '',
-          p.fechaDeVencimiento || '',
-          p.registroSanitario || '',
-          p.cantidadRecibida || '',
-          p.condicionesDeAlmacenamiento || '',
-          p.observaciones || '',
-        ]);
+        const tableBody = productChunk.map(p => {
+          const originalValues = [
+            p.nombreDelProductoFarmaceutico,
+            p.nombreDelDispositivoMedico,
+            p.formaFarmaceutica,
+            p.numeroDeLote,
+            p.concentracion,
+            p.presentacion,
+            p.envaseInmediato ? '✓' : '',
+            p.envaseMediato ? '✓' : '',
+            p.fechaDeVencimiento,
+            p.registroSanitario,
+            p.cantidadRecibida,
+            p.condicionesDeAlmacenamiento,
+            p.observaciones,
+          ];
+          
+          return originalValues.map(val => {
+            if (val === 'N/A') return '-';
+            return val || '';
+          });
+        });
 
         const requiredRows = 12;
         while (tableBody.length < requiredRows) {
@@ -219,7 +237,7 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
           styles: { cellPadding: 1 },
           willDrawCell: (data) => {
             if (data.cell.section === 'body' && (data.column.index === 6 || data.column.index === 7) && data.cell.raw === '✓') {
-              data.cell.text = []; // Clear the text to prevent drawing the '✓' character
+              data.cell.text = [];
             }
           },
           didDrawCell: (data) => {
@@ -227,9 +245,10 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
               const cell = data.cell;
               const x = cell.x + cell.width / 2;
               const y = cell.y + cell.height / 2;
-              doc.setLineWidth(0.4);
-              doc.line(x - 1.5, y, x, y + 1.5);
-              doc.line(x, y + 1.5, x + 2.5, y - 1.5);
+              doc.setLineWidth(0.3);
+              doc.setDrawColor(0, 0, 0);
+              doc.line(x - 1.5, y - 0.5, x, y + 1.5);
+              doc.line(x, y + 1.5, x + 2.5, y - 2);
             }
           },
           columnStyles: {
@@ -285,9 +304,9 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
   return (
     <TooltipProvider>
       <Image
-        id="company-logo"
+        id="farma-kids-logo"
         src="/logo.png"
-        alt="company logo"
+        alt="Botica Farma Kids logo"
         width={80}
         height={80}
         className="hidden"
@@ -295,6 +314,15 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
         onError={(e) => {
           (e.target as HTMLImageElement).src = 'https://placehold.co/80x80.png';
         }}
+      />
+      <Image
+        id="t-pharma-logo"
+        src="https://placehold.co/80x80.png"
+        alt="Botica T-Pharma logo"
+        width={80}
+        height={80}
+        className="hidden"
+        data-ai-hint="logo pharma"
       />
       <Card className="w-full">
         <CardHeader>
@@ -318,70 +346,84 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
           </div>
         </CardHeader>
         <CardContent>
-          <div className="relative w-full overflow-auto" ref={scrollContainerRef}>
-            <table className="w-full caption-bottom text-sm">
-              <TableHeader>
-                <TableRow>
-                  {columns.map(c => <TableHead key={c.key} className={c.widthClass}>{c.label}</TableHead>)}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.productos.map((product, rowIndex) => (
-                  <TableRow key={rowIndex}>
-                    {columns.map(col => {
-                        if (col.isCheckbox) {
-                           return (
-                                <TableCell key={col.key} className={`${col.widthClass} text-center`}>
-                                    <div className="flex justify-center">
-                                      <Checkbox
-                                          checked={!!product[col.key]}
-                                          onCheckedChange={(checked) => handleInputChange(rowIndex, col.key, !!checked)}
-                                      />
-                                    </div>
-                                </TableCell>
-                           )
-                        }
-                        
-                        const fieldKey = col.key as keyof typeof keyMap;
-                        const errorKey = `products.${rowIndex}.${keyMap[fieldKey]}`;
-                        const error = errorMap[errorKey];
-                        const InputComponent = col.isTextarea ? Textarea : Input;
-
-                        const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-                            if (col.key === 'cantidadRecibida') {
-                              const value = (e.target as HTMLInputElement).value;
-                              if (value && /^\d+$/.test(value)) {
-                                handleInputChange(rowIndex, 'cantidadRecibida', `${value}.00`);
-                              }
-                            }
-                        };
-
-                        return (
-                        <TableCell key={col.key} className={col.widthClass}>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <div className="relative">
-                                    <InputComponent
-                                        value={product[col.key] as string || ''}
-                                        onChange={(e) => handleInputChange(rowIndex, col.key, e.target.value)}
-                                        onBlur={handleBlur}
-                                        className={error ? 'border-destructive ring-destructive ring-1' : ''}
-                                        />
-                                    {error && <AlertCircle className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />}
-                                    </div>
-                                </TooltipTrigger>
-                                {error && <TooltipContent><p>{error}</p></TooltipContent>}
-                            </Tooltip>
-                        </TableCell>
-                        );
-                    })}
+          <div className="w-full overflow-hidden">
+            <div className="relative w-full overflow-auto" ref={scrollContainerRef}>
+              <table className="w-full caption-bottom text-sm">
+                <TableHeader>
+                  <TableRow>
+                    {columns.map(c => <TableHead key={c.key} className={c.widthClass}>{c.label}</TableHead>)}
                   </TableRow>
-                ))}
-              </TableBody>
-            </table>
+                </TableHeader>
+                <TableBody>
+                  {data.productos.map((product, rowIndex) => (
+                    <TableRow key={rowIndex}>
+                      {columns.map(col => {
+                          if (col.isCheckbox) {
+                            return (
+                                  <TableCell key={col.key} className={`${col.widthClass} text-center`}>
+                                      <div className="flex justify-center">
+                                        <Checkbox
+                                            checked={!!product[col.key]}
+                                            onCheckedChange={(checked) => handleInputChange(rowIndex, col.key, !!checked)}
+                                        />
+                                      </div>
+                                  </TableCell>
+                            )
+                          }
+                          
+                          const fieldKey = col.key as keyof typeof keyMap;
+                          const errorKey = `products.${rowIndex}.${keyMap[fieldKey]}`;
+                          const error = errorMap[errorKey];
+                          const InputComponent = col.isTextarea ? Textarea : Input;
+
+                          const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+                              if (col.key === 'cantidadRecibida') {
+                                const value = (e.target as HTMLInputElement).value;
+                                if (value && /^\d+$/.test(value)) {
+                                  handleInputChange(rowIndex, 'cantidadRecibida', `${value}.00`);
+                                }
+                              }
+                          };
+
+                          return (
+                          <TableCell key={col.key} className={col.widthClass}>
+                              <Tooltip>
+                                  <TooltipTrigger asChild>
+                                      <div className="relative">
+                                      <InputComponent
+                                          value={product[col.key] as string || ''}
+                                          onChange={(e) => handleInputChange(rowIndex, col.key, e.target.value)}
+                                          onBlur={handleBlur}
+                                          className={error ? 'border-destructive ring-destructive ring-1' : ''}
+                                          />
+                                      {error && <AlertCircle className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />}
+                                      </div>
+                                  </TooltipTrigger>
+                                  {error && <TooltipContent><p>{error}</p></TooltipContent>}
+                              </Tooltip>
+                          </TableCell>
+                          );
+                      })}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </table>
+            </div>
           </div>
         </CardContent>
-        <CardFooter className="flex justify-end gap-2">
+        <CardFooter className="flex justify-between items-end gap-4">
+            <div>
+              <Label htmlFor="pharmacy-select">Botica para el Reporte</Label>
+              <Select value={selectedPharmacy} onValueChange={setSelectedPharmacy}>
+                <SelectTrigger id="pharmacy-select" className="w-[280px] mt-2">
+                  <SelectValue placeholder="Seleccionar botica..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="BOTICA FARMA KIDS">BOTICA FARMA KIDS</SelectItem>
+                  <SelectItem value="BOTICA T-PHARMA">BOTICA T-PHARMA</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <Button onClick={generatePdf} className="bg-accent hover:bg-accent/90">
                 <Download className="mr-2 h-4 w-4" />
                 Generar PDF
