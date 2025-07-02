@@ -317,12 +317,15 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
       />
       <Image
         id="t-pharma-logo"
-        src="https://placehold.co/80x80.png"
+        src="/logo.png"
         alt="Botica T-Pharma logo"
         width={80}
         height={80}
         className="hidden"
         data-ai-hint="logo pharma"
+        onError={(e) => {
+          (e.target as HTMLImageElement).src = 'https://placehold.co/80x80.png';
+        }}
       />
       <Card className="w-full">
         <CardHeader>
