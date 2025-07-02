@@ -27,13 +27,10 @@ export default function Home() {
       if (storedHistory) {
         const parsedHistory = JSON.parse(storedHistory);
         if (Array.isArray(parsedHistory)) {
-          // Filter out items that don't have a valid `invoices` array.
-          // This handles cases where old data structures might be in localStorage.
           const validHistory = parsedHistory.filter(
             (item): item is InvoiceHistoryItem => item && Array.isArray(item.invoices)
           );
           setInvoiceHistory(validHistory);
-          // Optional: update localStorage with the cleaned data
           if (validHistory.length !== parsedHistory.length) {
             localStorage.setItem('invoiceHistory', JSON.stringify(validHistory));
           }
@@ -41,7 +38,6 @@ export default function Home() {
       }
     } catch (error) {
       console.error("Error al analizar el historial de facturas desde localStorage", error);
-      // If parsing fails, it's safer to just clear the corrupted data.
       localStorage.removeItem('invoiceHistory');
     }
   }, []);
@@ -51,46 +47,69 @@ export default function Home() {
     localStorage.setItem('invoiceHistory', JSON.stringify(newHistory));
   };
 
-  const handleProcessInvoice = async (file: File) => {
+  const handleProcessInvoices = async (files: File[]) => {
     setAppState('loading');
 
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = async () => {
-      const dataUri = reader.result as string;
-
-      const result = await extractAndValidateInvoiceAction(dataUri);
-
-      if (result.errorMessage || !result.processedInvoices) {
-        setAppState('error');
-        toast({
-          variant: 'destructive',
-          title: 'Error al Procesar la Factura',
-          description: result.errorMessage || 'Ocurrió un error desconocido.',
+    const processFile = (file: File): Promise<ProcessedInvoice[] | null> => {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = async () => {
+                const dataUri = reader.result as string;
+                try {
+                    const result = await extractAndValidateInvoiceAction(dataUri);
+                    if (result.errorMessage || !result.processedInvoices) {
+                        toast({
+                            variant: 'destructive',
+                            title: `Error al procesar ${file.name}`,
+                            description: result.errorMessage || 'Ocurrió un error desconocido.',
+                        });
+                        resolve(null);
+                    } else {
+                        resolve(result.processedInvoices);
+                    }
+                } catch (e) {
+                     const errorMessage = e instanceof Error ? e.message : 'Ocurrió un error inesperado.';
+                     toast({
+                        variant: 'destructive',
+                        title: `Error al procesar ${file.name}`,
+                        description: errorMessage,
+                    });
+                    resolve(null);
+                }
+            };
+            reader.onerror = () => {
+                toast({
+                    variant: 'destructive',
+                    title: 'Error al Leer el Archivo',
+                    description: `No se pudo leer el archivo ${file.name}. Por favor, inténtalo de nuevo.`,
+                });
+                resolve(null);
+            };
         });
+    };
+
+    const results = await Promise.all(files.map(processFile));
+    const successfulResults = results.filter((r): r is ProcessedInvoice[] => r !== null);
+
+    if (successfulResults.length === 0) {
+        setAppState('error');
         return;
-      }
+    }
 
-      const newHistoryItem: InvoiceHistoryItem = {
+    const allProcessedInvoices = successfulResults.flat();
+
+    const newHistoryItem: InvoiceHistoryItem = {
         id: Date.now().toString(),
-        fileName: file.name,
+        fileName: files.length > 1 ? `${files.length} archivos procesados` : files[0].name,
         processedAt: new Date().toISOString(),
-        invoices: result.processedInvoices,
-      };
-      updateHistory([newHistoryItem, ...invoiceHistory]);
+        invoices: allProcessedInvoices,
+    };
+    updateHistory([newHistoryItem, ...invoiceHistory]);
 
-      setProcessedInvoices(result.processedInvoices);
-      setAppState('success');
-    };
-    reader.onerror = () => {
-      setAppState('error');
-      toast({
-        variant: 'destructive',
-        title: 'Error al Leer el Archivo',
-        description: 'No se pudo leer el archivo seleccionado. Por favor, inténtalo de nuevo.',
-      });
-    };
-  };
+    setProcessedInvoices(allProcessedInvoices);
+    setAppState('success');
+};
   
   const handleSelectFromHistory = (item: InvoiceHistoryItem) => {
     setProcessedInvoices(item.invoices);
@@ -117,7 +136,7 @@ export default function Home() {
         return (
           <div className="flex flex-col items-center justify-center gap-4 text-center">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            <p className="text-lg font-medium text-muted-foreground">Extrayendo datos de su factura...</p>
+            <p className="text-lg font-medium text-muted-foreground">Extrayendo datos de sus facturas...</p>
             <p className="text-sm text-muted-foreground">La IA está trabajando. Esto puede tomar un momento.</p>
           </div>
         );
@@ -171,7 +190,7 @@ export default function Home() {
                 Sube tu factura para extraer, verificar y formatear automáticamente los datos de recepción de tus productos farmacéuticos.
               </p>
             </div>
-            <InvoiceUpload onProcess={handleProcessInvoice} />
+            <InvoiceUpload onProcess={handleProcessInvoices} />
             {isClient && invoiceHistory.length > 0 && (
                 <div className="mt-6 text-center">
                     <Button variant="ghost" onClick={handleShowHistory}>
