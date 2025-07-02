@@ -45,22 +45,61 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
   }, [initialValidationErrors]);
 
   useEffect(() => {
-    const element = scrollContainerRef.current;
+    const slider = scrollContainerRef.current;
+    if (!slider) return;
 
-    if (element) {
-      const onWheel = (e: WheelEvent) => {
-        if (e.shiftKey) {
-          e.preventDefault();
-          element.scrollLeft += e.deltaY;
-        }
-      };
+    slider.style.cursor = 'grab';
+
+    let isDown = false;
+    let startX: number;
+    let scrollLeft: number;
+
+    const handleMouseDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      // Do not start drag if the user is interacting with an input, textarea, or checkbox
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.closest('[role="checkbox"]')
+      ) {
+        return;
+      }
       
-      element.addEventListener('wheel', onWheel);
-      
-      return () => {
-        element.removeEventListener('wheel', onWheel);
-      };
-    }
+      isDown = true;
+      slider.style.cursor = 'grabbing';
+      startX = e.pageX - slider.offsetLeft;
+      scrollLeft = slider.scrollLeft;
+    };
+
+    const handleMouseLeave = () => {
+      isDown = false;
+      slider.style.cursor = 'grab';
+    };
+
+    const handleMouseUp = () => {
+      isDown = false;
+      slider.style.cursor = 'grab';
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - slider.offsetLeft;
+      const walk = (x - startX) * 2; // The multiplier makes scrolling faster
+      slider.scrollLeft = scrollLeft - walk;
+    };
+
+    slider.addEventListener('mousedown', handleMouseDown);
+    slider.addEventListener('mouseleave', handleMouseLeave);
+    slider.addEventListener('mouseup', handleMouseUp);
+    slider.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      slider.removeEventListener('mousedown', handleMouseDown);
+      slider.removeEventListener('mouseleave', handleMouseLeave);
+      slider.removeEventListener('mouseup', handleMouseUp);
+      slider.removeEventListener('mousemove', handleMouseMove);
+    };
   }, []);
 
   const handleInputChange = (rowIndex: number, field: keyof Product, value: string | boolean) => {
