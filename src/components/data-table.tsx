@@ -67,38 +67,44 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
       
       isDown = true;
       slider.style.cursor = 'grabbing';
-      startX = e.pageX - slider.offsetLeft;
+      startX = e.pageX;
       scrollLeft = slider.scrollLeft;
+
+      // Add move and up listeners to the whole window
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
     };
 
-    const handleMouseLeave = () => {
-      isDown = false;
-      slider.style.cursor = 'grab';
-    };
-
-    const handleMouseUp = () => {
-      isDown = false;
-      slider.style.cursor = 'grab';
-    };
 
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDown) return;
       e.preventDefault();
-      const x = e.pageX - slider.offsetLeft;
+      const x = e.pageX;
       const walk = (x - startX) * 2; // The multiplier makes scrolling faster
       slider.scrollLeft = scrollLeft - walk;
     };
 
+    const handleMouseUp = () => {
+      isDown = false;
+      if (slider) {
+        slider.style.cursor = 'grab';
+      }
+
+      // Remove move and up listeners from the whole window
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+
     slider.addEventListener('mousedown', handleMouseDown);
-    slider.addEventListener('mouseleave', handleMouseLeave);
-    slider.addEventListener('mouseup', handleMouseUp);
-    slider.addEventListener('mousemove', handleMouseMove);
 
     return () => {
-      slider.removeEventListener('mousedown', handleMouseDown);
-      slider.removeEventListener('mouseleave', handleMouseLeave);
-      slider.removeEventListener('mouseup', handleMouseUp);
-      slider.removeEventListener('mousemove', handleMouseMove);
+      // Cleanup mousedown listener
+      if (slider) {
+        slider.removeEventListener('mousedown', handleMouseDown);
+      }
+      // Cleanup window listeners in case the component unmounts mid-drag
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
     };
   }, []);
 
