@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import type { InvoiceData, Product, ValidationError } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -34,6 +34,7 @@ const keyMap: { [K in keyof Omit<Product, 'envaseInmediato' | 'envaseMediato' | 
 
 export function DataTable({ initialData, initialValidationErrors }: DataTableProps) {
   const [data, setData] = useState<InvoiceData>(initialData);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const errorMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -42,6 +43,25 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
     });
     return map;
   }, [initialValidationErrors]);
+
+  useEffect(() => {
+    const element = scrollContainerRef.current;
+
+    if (element) {
+      const onWheel = (e: WheelEvent) => {
+        if (e.shiftKey) {
+          e.preventDefault();
+          element.scrollLeft += e.deltaY;
+        }
+      };
+      
+      element.addEventListener('wheel', onWheel);
+      
+      return () => {
+        element.removeEventListener('wheel', onWheel);
+      };
+    }
+  }, []);
 
   const handleInputChange = (rowIndex: number, field: keyof Product, value: string | boolean) => {
     const updatedProducts = [...data.productos];
@@ -233,6 +253,7 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
         width={80}
         height={80}
         className="hidden"
+        data-ai-hint="logo"
         onError={(e) => {
           (e.target as HTMLImageElement).src = 'https://placehold.co/80x80.png';
         }}
@@ -259,7 +280,7 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" ref={scrollContainerRef}>
             <Table>
               <TableHeader>
                 <TableRow>
