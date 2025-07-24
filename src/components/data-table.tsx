@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import type { InvoiceData, Product, ValidationError } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -169,7 +169,6 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
           return originalValues.map(val => {
             if (val === true) return '✓';
             if (val === false || val === undefined || val === null) return '';
-            if (val === 'N/A') return '-';
             return String(val);
           });
         });
