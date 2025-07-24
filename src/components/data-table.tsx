@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Download, AlertCircle } from 'lucide-react';
+import { Download, AlertCircle, Save } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -42,12 +42,13 @@ const keyMap: { [K in keyof Omit<Product, 'envaseInmediato' | 'envaseMediato' | 
 
 export function DataTable({ initialData, initialValidationErrors, onDataChange }: DataTableProps) {
   const [data, setData] = useState<InvoiceData>(initialData);
+  const [hasChanges, setHasChanges] = useState(false);
   const [selectedPharmacy, setSelectedPharmacy] = useState('BOTICA FARMA KIDS');
   const tableRef = useRef<HTMLTableElement>(null);
   
-  // Effect to sync parent changes to local state
   useEffect(() => {
     setData(initialData);
+    setHasChanges(false);
   }, [initialData]);
 
   const errorMap = useMemo(() => {
@@ -65,15 +66,18 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
     updatedProducts[rowIndex] = currentProduct;
     const newData = { ...data, productos: updatedProducts };
     setData(newData);
+    setHasChanges(true);
   };
   
   const handleHeaderLocalChange = (field: keyof Omit<InvoiceData, 'productos'>, value: string) => {
     const newData = { ...data, [field]: value };
     setData(newData);
+    setHasChanges(true);
   };
   
   const handleSaveChanges = () => {
     onDataChange(data);
+    setHasChanges(false);
   };
 
   const handleTextareaInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
@@ -288,10 +292,18 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
       />
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Formato de Recepción</CardTitle>
-          <CardDescription>
-            Verifique los datos extraídos por la IA. Puede editar cualquier campo antes de generar el PDF final.
-          </CardDescription>
+          <div className="flex justify-between items-start gap-4">
+            <div>
+              <CardTitle>Formato de Recepción</CardTitle>
+              <CardDescription>
+                Verifique los datos extraídos. Edite cualquier campo y guarde los cambios antes de generar el PDF.
+              </CardDescription>
+            </div>
+             <Button onClick={handleSaveChanges} disabled={!hasChanges}>
+                <Save className="mr-2 h-4 w-4" />
+                Guardar Cambios
+            </Button>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
             <div className="space-y-2">
               <Label htmlFor={`proveedor-${initialData.numeroDeFactura}`}>Proveedor</Label>
@@ -299,7 +311,6 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
                 id={`proveedor-${initialData.numeroDeFactura}`} 
                 value={data.proveedor} 
                 onChange={(e) => handleHeaderLocalChange('proveedor', e.target.value)}
-                onBlur={handleSaveChanges}
                 onInput={handleTextareaInput}
                 rows={1}
                 className="resize-none overflow-hidden" 
@@ -311,7 +322,6 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
                 id={`numeroDeFactura-${initialData.numeroDeFactura}`} 
                 value={data.numeroDeFactura} 
                 onChange={(e) => handleHeaderLocalChange('numeroDeFactura', e.target.value)}
-                onBlur={handleSaveChanges}
                 onInput={handleTextareaInput}
                 rows={1}
                 className="resize-none overflow-hidden" 
@@ -323,7 +333,6 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
                 id={`fechaDeEmision-${initialData.numeroDeFactura}`} 
                 value={data.fechaDeEmision} 
                 onChange={(e) => handleHeaderLocalChange('fechaDeEmision', e.target.value)} 
-                onBlur={handleSaveChanges}
                 onInput={handleTextareaInput}
                 rows={1}
                 className="resize-none overflow-hidden" 
@@ -355,7 +364,6 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
                                 checked={!!product[col.key]}
                                 onCheckedChange={(checked) => {
                                   handleLocalChange(rowIndex, col.key, !!checked);
-                                  handleSaveChanges();
                                 }}
                               />
                             </div>
@@ -375,7 +383,6 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
                                 <Textarea
                                   value={(product[col.key] as string || '').toString()}
                                   onChange={(e) => handleLocalChange(rowIndex, col.key, e.target.value)}
-                                  onBlur={handleSaveChanges}
                                   onInput={handleTextareaInput}
                                   rows={1}
                                   className={cn(
