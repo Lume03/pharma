@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Download, AlertCircle, PlusCircle, XCircle } from 'lucide-react';
+import { Download, AlertCircle } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -81,25 +81,6 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
     }
   }, [data.productos]);
 
-  const addRow = () => {
-    const newProduct: Product = {
-      nombreDelProductoFarmaceutico: '',
-      formaFarmaceutica: '',
-      numeroDeLote: '',
-      concentracion: '',
-      presentacion: '',
-      fechaDeVencimiento: '',
-      cantidadRecibida: '',
-    };
-    setData({ ...data, productos: [...data.productos, newProduct] });
-  };
-
-  const removeRow = (rowIndex: number) => {
-    const updatedProducts = data.productos.filter((_, index) => index !== rowIndex);
-    setData({ ...data, productos: updatedProducts });
-  };
-
-
   const generatePdf = () => {
     const products = data.productos;
     const chunkSize = 12;
@@ -109,7 +90,7 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
         const doc = new jsPDF({ orientation: 'landscape' });
         const pageW = doc.internal.pageSize.getWidth();
         
-        const logoId = selectedPharmacy === 'BOTICA FARMA KIDS' ? 'farma-kids-logo' : 't-pharma-logo';
+        const logoId = 'farma-kids-logo';
         const logoEl = document.getElementById(logoId);
         if (logoEl) {
           try {
@@ -286,19 +267,7 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
       <Image
         id="farma-kids-logo"
         src="/logo.png"
-        alt="Botica Farma Kids logo"
-        width={80}
-        height={80}
-        className="hidden"
-        data-ai-hint="logo"
-        onError={(e) => {
-          (e.target as HTMLImageElement).src = 'https://placehold.co/80x80.png';
-        }}
-      />
-      <Image
-        id="t-pharma-logo"
-        src="/logo.png"
-        alt="Botica T-Pharma logo"
+        alt="Botica Farma Kids / T-Pharma logo"
         width={80}
         height={80}
         className="hidden"
@@ -359,7 +328,6 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
                       {c.label}
                     </TableHead>
                   ))}
-                   <TableHead className="w-[5%] text-center">Acción</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody className="bg-white divide-y divide-gray-200">
@@ -406,21 +374,10 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
                         </TableCell>
                       );
                     })}
-                     <TableCell className="p-1 align-top text-center">
-                      <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-100 rounded-full h-8 w-8 mt-1" onClick={() => removeRow(rowIndex)}>
-                        <XCircle className="h-5 w-5" />
-                      </Button>
-                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          </div>
-          <div className="mt-4">
-              <Button variant="outline" onClick={addRow}>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Añadir Fila
-              </Button>
           </div>
         </CardContent>
         <CardFooter className="flex justify-between items-end gap-4">
