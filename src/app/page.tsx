@@ -46,26 +46,23 @@ export default function Home() {
   const handleDataChange = (invoiceIndex: number, newInvoiceData: InvoiceData) => {
     if (!currentHistoryId) return;
 
-    // This function will be called less frequently (onBlur), reducing localStorage writes.
+    // This is the key optimization:
+    // Update localStorage directly without triggering a re-render of the entire page.
+    // The DataTable component manages its own state for UI responsiveness.
     const currentHistory = JSON.parse(localStorage.getItem('invoiceHistory') || '[]') as InvoiceHistoryItem[];
     const historyItemIndex = currentHistory.findIndex(item => item.id === currentHistoryId);
 
     if (historyItemIndex > -1) {
-      currentHistory[historyItemIndex].invoices[invoiceIndex].data = newInvoiceData;
-      localStorage.setItem('invoiceHistory', JSON.stringify(currentHistory));
-      
-      // Update the history state so it's correct if we switch views
-      setInvoiceHistory(currentHistory);
+      // Ensure the invoice data exists before trying to modify it.
+      if (currentHistory[historyItemIndex].invoices[invoiceIndex]) {
+        currentHistory[historyItemIndex].invoices[invoiceIndex].data = newInvoiceData;
+        localStorage.setItem('invoiceHistory', JSON.stringify(currentHistory));
+        
+        // We also update the history in the state, so it's correct if the user navigates away
+        // and comes back without a page reload.
+        setInvoiceHistory(currentHistory);
+      }
     }
-    
-    // Also update the currently displayed invoices' state locally for UI reactivity,
-    // though this will now happen less often.
-    setProcessedInvoices(prevInvoices => {
-        if (!prevInvoices) return null;
-        const updated = [...prevInvoices];
-        updated[invoiceIndex] = { ...updated[invoiceIndex], data: newInvoiceData };
-        return updated;
-    });
 };
 
 
@@ -191,7 +188,7 @@ export default function Home() {
 
                 {processedInvoices.map((invoice, index) => (
                     <DataTable
-                        key={`${invoice.data.numeroDeFactura || 'invoice'}-${index}`}
+                        key={`${currentHistoryId}-${invoice.data.numeroDeFactura || 'invoice'}-${index}`}
                         initialData={invoice.data}
                         initialValidationErrors={invoice.errors}
                         onDataChange={(newData) => handleDataChange(index, newData)}

@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Download, AlertCircle } from 'lucide-react';
+import { Download, AlertCircle, Trash2, Plus } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
 
 interface DataTableProps {
   initialData: InvoiceData;
@@ -41,12 +42,14 @@ const keyMap: { [K in keyof Omit<Product, 'envaseInmediato' | 'envaseMediato' | 
 };
 
 export function DataTable({ initialData, initialValidationErrors, onDataChange }: DataTableProps) {
-  // Local state for immediate UI feedback. This is the key to performance.
+  // The component now manages its own state. This is the key to performance.
+  // It's initialized once and then all edits happen locally.
   const [data, setData] = useState<InvoiceData>(initialData);
   const [selectedPharmacy, setSelectedPharmacy] = useState('BOTICA FARMA KIDS');
   const tableRef = useRef<HTMLTableElement>(null);
 
-  // Sync with parent component only when initialData changes
+  // Sync with parent only when the initialData prop *itself* changes (e.g., loading a new invoice)
+  // This prevents re-renders on every keystroke from the parent.
   useEffect(() => {
     setData(initialData);
   }, [initialData]);
@@ -59,7 +62,8 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
     return map;
   }, [initialValidationErrors]);
   
-  // This function is now called only when leaving a field, not on every keystroke.
+  // This function is called only when leaving a field.
+  // It communicates the entire updated invoice data back to the parent.
   const handlePersistChanges = useCallback(() => {
     onDataChange(data);
   }, [data, onDataChange]);
@@ -77,11 +81,11 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
         return { ...prevData, productos: updatedProducts };
     });
   };
-  
+
   const handleTextareaInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
-      const textarea = e.currentTarget;
-      textarea.style.height = 'auto';
-      textarea.style.height = `${textarea.scrollHeight}px`;
+    const textarea = e.currentTarget;
+    textarea.style.height = 'auto';
+    textarea.style.height = `${textarea.scrollHeight}px`;
   };
 
   useEffect(() => {
@@ -93,6 +97,7 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
       });
     }
   }, [data.productos]);
+
 
   const generatePdf = () => {
     const products = data.productos;
@@ -294,7 +299,7 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
             <div>
               <CardTitle>Formato de Recepción</CardTitle>
               <CardDescription>
-                Verifique los datos extraídos. Edite cualquier campo y los cambios se guardarán automáticamente.
+                Verifique los datos extraídos. Edite cualquier campo y los cambios se guardarán automáticamente al salir del campo.
               </CardDescription>
             </div>
           </div>
