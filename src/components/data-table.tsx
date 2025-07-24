@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Download, AlertCircle } from 'lucide-react';
@@ -52,63 +52,6 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
     });
     return map;
   }, [initialValidationErrors]);
-
-  useEffect(() => {
-    const slider = scrollContainerRef.current;
-    if (!slider) return;
-
-    slider.style.cursor = 'grab';
-
-    let isDown = false;
-    let startX: number;
-    let scrollLeft: number;
-
-    const handlePointerDown = (e: PointerEvent) => {
-      const target = e.target as HTMLElement;
-      if (
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.closest('button[role="checkbox"]')
-      ) {
-        return;
-      }
-      
-      isDown = true;
-      slider.setPointerCapture(e.pointerId);
-      slider.style.cursor = 'grabbing';
-      startX = e.pageX;
-      scrollLeft = slider.scrollLeft;
-    };
-
-    const handlePointerMove = (e: PointerEvent) => {
-      if (!isDown) return;
-      e.preventDefault();
-      const x = e.pageX;
-      const walk = (x - startX) * 2;
-      slider.scrollLeft = scrollLeft - walk;
-    };
-
-    const handlePointerUp = (e: PointerEvent) => {
-      if (!isDown) return;
-      isDown = false;
-      slider.releasePointerCapture(e.pointerId);
-      slider.style.cursor = 'grab';
-    };
-
-    slider.addEventListener('pointerdown', handlePointerDown);
-    slider.addEventListener('pointermove', handlePointerMove);
-    slider.addEventListener('pointerup', handlePointerUp);
-    slider.addEventListener('pointerleave', handlePointerUp);
-
-    return () => {
-      if (slider) {
-        slider.removeEventListener('pointerdown', handlePointerDown);
-        slider.removeEventListener('pointermove', handlePointerMove);
-        slider.removeEventListener('pointerup', handlePointerUp);
-        slider.removeEventListener('pointerleave', handlePointerUp);
-      }
-    };
-  }, []);
 
   const handleInputChange = (rowIndex: number, field: keyof Product, value: string | boolean) => {
     const updatedProducts = [...data.productos];
@@ -194,8 +137,8 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
             p.numeroDeLote,
             p.concentracion,
             p.presentacion,
-            p.envaseInmediato ? '✓' : '',
-            p.envaseMediato ? '✓' : '',
+            p.envaseInmediato,
+            p.envaseMediato,
             p.fechaDeVencimiento,
             p.registroSanitario,
             p.cantidadRecibida,
@@ -204,8 +147,10 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
           ];
           
           return originalValues.map(val => {
+            if (val === true) return '✓';
+            if (val === false || val === undefined || val === null) return '';
             if (val === 'N/A') return '-';
-            return val || '';
+            return String(val);
           });
         });
 
@@ -232,13 +177,10 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
               fontSize: 7,
               lineWidth: 0.1,
               lineColor: [0, 0, 0],
-              minCellHeight: 8
-          },
-          styles: { cellPadding: 1 },
-          willDrawCell: (data) => {
-            if (data.cell.section === 'body' && (data.column.index === 6 || data.column.index === 7) && data.cell.raw === '✓') {
-              data.cell.text = [];
-            }
+              minCellHeight: 8,
+              cellPadding: 1,
+              valign: 'middle',
+              halign: 'center'
           },
           didDrawCell: (data) => {
             if (data.cell.section === 'body' && (data.column.index === 6 || data.column.index === 7) && data.cell.raw === '✓') {
@@ -247,24 +189,26 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
               const y = cell.y + cell.height / 2;
               doc.setLineWidth(0.3);
               doc.setDrawColor(0, 0, 0);
-              doc.line(x - 1.5, y - 0.5, x, y + 1.5);
-              doc.line(x, y + 1.5, x + 2.5, y - 2);
+              // Draw a clean checkmark
+              doc.line(x - 1.5, y - 0.5, x, y + 1.5); // smaller part of check
+              doc.line(x, y + 1.5, x + 2.5, y - 2); // larger part of check
+              data.cell.text = []; // Clear the original '✓' text
             }
           },
           columnStyles: {
-            0: { cellWidth: 30 },
-            1: { cellWidth: 10 },
-            2: { cellWidth: 60 },
-            3: { cellWidth: 25, halign: 'center' },
-            4: { cellWidth: 20, halign: 'center' },
-            5: { cellWidth: 20, halign: 'center' },
-            6: { cellWidth: 15, halign: 'center' },
-            7: { cellWidth: 15, halign: 'center' },
-            8: { cellWidth: 20, halign: 'center' },
-            9: { cellWidth: 20, halign: 'center' },
-            10: { cellWidth: 15, halign: 'center' },
-            11: { cellWidth: 10, halign: 'center' },
-            12: { cellWidth: 'auto' },
+            0: { cellWidth: 30, halign: 'left' },
+            1: { cellWidth: 30, halign: 'left' },
+            2: { cellWidth: 30, halign: 'left' },
+            3: { cellWidth: 20 },
+            4: { cellWidth: 20 },
+            5: { cellWidth: 20 },
+            6: { cellWidth: 15 },
+            7: { cellWidth: 15 },
+            8: { cellWidth: 20 },
+            9: { cellWidth: 20 },
+            10: { cellWidth: 15 },
+            11: { cellWidth: 20, halign: 'left' },
+            12: { cellWidth: 'auto', halign: 'left' },
           }
         });
         
@@ -285,20 +229,20 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
     }
   };
   
-  const columns: { key: keyof Product, label: string, isTextarea?: boolean, isCheckbox?: boolean, widthClass?: string }[] = [
-      { key: 'nombreDelProductoFarmaceutico', label: 'Nombre Producto Farmaceutico', isTextarea: true, widthClass: 'min-w-[250px]' },
-      { key: 'nombreDelDispositivoMedico', label: 'Nombre Dispositivo Médico', isTextarea: true, widthClass: 'min-w-[250px]' },
-      { key: 'formaFarmaceutica', label: 'Forma Farmacéutica', isTextarea: true, widthClass: 'min-w-[250px]' },
-      { key: 'numeroDeLote', label: 'Nº Lote', isTextarea: true, widthClass: 'min-w-[180px]' },
-      { key: 'concentracion', label: 'Concentración', isTextarea: true, widthClass: 'min-w-[150px]' },
-      { key: 'presentacion', label: 'Presentación', isTextarea: true, widthClass: 'min-w-[150px]' },
-      { key: 'envaseInmediato', label: 'Env. Inmediato', isCheckbox: true, widthClass: 'min-w-[120px]' },
-      { key: 'envaseMediato', label: 'Env. Mediato', isCheckbox: true, widthClass: 'min-w-[120px]' },
-      { key: 'fechaDeVencimiento', label: 'F. Vencimiento', isTextarea: true, widthClass: 'min-w-[150px]' },
-      { key: 'registroSanitario', label: 'Reg. Sanitario', isTextarea: true, widthClass: 'min-w-[180px]' },
-      { key: 'cantidadRecibida', label: 'Cant. Recibida', widthClass: 'min-w-[120px]' },
-      { key: 'condicionesDeAlmacenamiento', label: 'Cond. Almacenamiento', isTextarea: true, widthClass: 'min-w-[250px]' },
-      { key: 'observaciones', label: 'Observaciones', isTextarea: true, widthClass: 'min-w-[250px]' },
+  const columns: { key: keyof Product, label: string, isCheckbox?: boolean, widthClass?: string }[] = [
+      { key: 'nombreDelProductoFarmaceutico', label: 'Nombre Producto', widthClass: 'w-[15%]' },
+      { key: 'nombreDelDispositivoMedico', label: 'Dispositivo Médico', widthClass: 'w-[10%]' },
+      { key: 'formaFarmaceutica', label: 'Forma Farmacéutica', widthClass: 'w-[15%]' },
+      { key: 'numeroDeLote', label: 'Nº Lote', widthClass: 'w-[8%]' },
+      { key: 'concentracion', label: 'Concentración', widthClass: 'w-[8%]' },
+      { key: 'presentacion', label: 'Presentación', widthClass: 'w-[8%]' },
+      { key: 'envaseInmediato', label: 'Env. Inm.', isCheckbox: true, widthClass: 'w-[5%]' },
+      { key: 'envaseMediato', label: 'Env. Med.', isCheckbox: true, widthClass: 'w-[5%]' },
+      { key: 'fechaDeVencimiento', label: 'F. Venc.', widthClass: 'w-[8%]' },
+      { key: 'registroSanitario', label: 'Reg. Sanitario', widthClass: 'w-[8%]' },
+      { key: 'cantidadRecibida', label: 'Cant. Rec.', widthClass: 'w-[5%]' },
+      { key: 'condicionesDeAlmacenamiento', label: 'Almacenamiento', widthClass: 'w-[10%]' },
+      { key: 'observaciones', label: 'Observaciones', widthClass: 'w-[10%]' },
   ];
 
   return (
@@ -350,8 +294,7 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
         </CardHeader>
         <CardContent>
           <div className="w-full overflow-hidden">
-            <div className="relative w-full overflow-auto" ref={scrollContainerRef}>
-              <table className="w-full caption-bottom text-sm">
+            <Table>
                 <TableHeader>
                   <TableRow>
                     {columns.map(c => <TableHead key={c.key} className={c.widthClass}>{c.label}</TableHead>)}
@@ -363,7 +306,7 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
                       {columns.map(col => {
                           if (col.isCheckbox) {
                             return (
-                                  <TableCell key={col.key} className={`${col.widthClass} text-center`}>
+                                  <TableCell key={col.key} className="text-center">
                                       <div className="flex justify-center">
                                         <Checkbox
                                             checked={!!product[col.key]}
@@ -377,27 +320,17 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
                           const fieldKey = col.key as keyof typeof keyMap;
                           const errorKey = `products.${rowIndex}.${keyMap[fieldKey]}`;
                           const error = errorMap[errorKey];
-                          const InputComponent = col.isTextarea ? Textarea : Input;
-
-                          const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-                              if (col.key === 'cantidadRecibida') {
-                                const value = (e.target as HTMLInputElement).value;
-                                if (value && /^\d+$/.test(value)) {
-                                  handleInputChange(rowIndex, 'cantidadRecibida', `${value}.00`);
-                                }
-                              }
-                          };
-
+                          
                           return (
-                          <TableCell key={col.key} className={col.widthClass}>
+                          <TableCell key={col.key}>
                               <Tooltip>
                                   <TooltipTrigger asChild>
                                       <div className="relative">
-                                      <InputComponent
-                                          value={product[col.key] as string || ''}
+                                      <Textarea
+                                          value={(product[col.key] as string || '').toString()}
                                           onChange={(e) => handleInputChange(rowIndex, col.key, e.target.value)}
-                                          onBlur={handleBlur}
-                                          className={error ? 'border-destructive ring-destructive ring-1' : ''}
+                                          className={`w-full min-h-[40px] text-xs p-1 ${error ? 'border-destructive ring-destructive ring-1' : ''}`}
+                                          rows={2}
                                           />
                                       {error && <AlertCircle className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />}
                                       </div>
@@ -410,8 +343,7 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
                     </TableRow>
                   ))}
                 </TableBody>
-              </table>
-            </div>
+              </Table>
           </div>
         </CardContent>
         <CardFooter className="flex justify-between items-end gap-4">
