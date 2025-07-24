@@ -6,7 +6,7 @@ import { DataTable } from '@/components/data-table';
 import { InvoiceHistory } from '@/components/invoice-history';
 import { extractAndValidateInvoiceAction } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
-import type { ProcessedInvoice, InvoiceHistoryItem } from '@/types';
+import type { ProcessedInvoice, InvoiceHistoryItem, InvoiceData } from '@/types';
 import { Loader2, History, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +17,7 @@ export default function Home() {
   const [appState, setAppState] = useState<AppState>('idle');
   const [processedInvoices, setProcessedInvoices] = useState<ProcessedInvoice[] | null>(null);
   const [invoiceHistory, setInvoiceHistory] = useState<InvoiceHistoryItem[]>([]);
+  const [currentHistoryId, setCurrentHistoryId] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
 
@@ -46,6 +47,34 @@ export default function Home() {
     setInvoiceHistory(newHistory);
     localStorage.setItem('invoiceHistory', JSON.stringify(newHistory));
   };
+  
+  const handleDataChange = (invoiceIndex: number, newInvoiceData: InvoiceData) => {
+    if (!currentHistoryId) return;
+
+    const newHistory = invoiceHistory.map(historyItem => {
+        if (historyItem.id === currentHistoryId) {
+            const updatedInvoices = historyItem.invoices.map((invoice, index) => {
+                if (index === invoiceIndex) {
+                    return { ...invoice, data: newInvoiceData };
+                }
+                return invoice;
+            });
+            return { ...historyItem, invoices: updatedInvoices };
+        }
+        return historyItem;
+    });
+
+    updateHistory(newHistory);
+
+    // Also update the currently displayed invoices
+    setProcessedInvoices(prevInvoices => {
+        if (!prevInvoices) return null;
+        const updated = [...prevInvoices];
+        updated[invoiceIndex] = { ...updated[invoiceIndex], data: newInvoiceData };
+        return updated;
+    });
+};
+
 
   const handleProcessInvoices = async (files: File[]) => {
     setAppState('loading');
@@ -98,9 +127,10 @@ export default function Home() {
     }
 
     const allProcessedInvoices = successfulResults.flat();
-
+    
+    const newHistoryItemId = Date.now().toString();
     const newHistoryItem: InvoiceHistoryItem = {
-        id: Date.now().toString(),
+        id: newHistoryItemId,
         fileName: files.length > 1 ? `${files.length} archivos procesados` : files[0].name,
         processedAt: new Date().toISOString(),
         invoices: allProcessedInvoices,
@@ -108,11 +138,13 @@ export default function Home() {
     updateHistory([newHistoryItem, ...invoiceHistory]);
 
     setProcessedInvoices(allProcessedInvoices);
+    setCurrentHistoryId(newHistoryItemId);
     setAppState('success');
 };
   
   const handleSelectFromHistory = (item: InvoiceHistoryItem) => {
     setProcessedInvoices(item.invoices);
+    setCurrentHistoryId(item.id);
     setAppState('success');
   };
 
@@ -123,6 +155,7 @@ export default function Home() {
 
   const handleStartOver = () => {
     setProcessedInvoices(null);
+    setCurrentHistoryId(null);
     setAppState('idle');
   };
   
@@ -164,6 +197,7 @@ export default function Home() {
                         key={`${invoice.data.numeroDeFactura || 'invoice'}-${index}`}
                         initialData={invoice.data}
                         initialValidationErrors={invoice.errors}
+                        onDataChange={(newData) => handleDataChange(index, newData)}
                     />
                 ))}
             </div>

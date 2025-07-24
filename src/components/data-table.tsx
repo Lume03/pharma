@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 interface DataTableProps {
   initialData: InvoiceData;
   initialValidationErrors: ValidationError[];
+  onDataChange: (newData: InvoiceData) => void;
 }
 
 const keyMap: { [K in keyof Omit<Product, 'envaseInmediato' | 'envaseMediato' | 'condicionesDeAlmacenamiento' | 'observaciones'>]: string } = {
@@ -39,10 +40,15 @@ const keyMap: { [K in keyof Omit<Product, 'envaseInmediato' | 'envaseMediato' | 
   cantidadRecibida: 'quantityReceived',
 };
 
-export function DataTable({ initialData, initialValidationErrors }: DataTableProps) {
+export function DataTable({ initialData, initialValidationErrors, onDataChange }: DataTableProps) {
   const [data, setData] = useState<InvoiceData>(initialData);
   const [selectedPharmacy, setSelectedPharmacy] = useState('BOTICA FARMA KIDS');
   const tableRef = useRef<HTMLTableElement>(null);
+  
+  // Effect to sync parent changes to local state
+  useEffect(() => {
+    setData(initialData);
+  }, [initialData]);
 
   const errorMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -57,11 +63,15 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
     const currentProduct = { ...updatedProducts[rowIndex] };
     (currentProduct[field] as any) = value;
     updatedProducts[rowIndex] = currentProduct;
-    setData({ ...data, productos: updatedProducts });
+    const newData = { ...data, productos: updatedProducts };
+    setData(newData);
+    onDataChange(newData);
   };
   
   const handleHeaderChange = (field: keyof Omit<InvoiceData, 'productos'>, value: string) => {
-    setData({ ...data, [field]: value });
+    const newData = { ...data, [field]: value };
+    setData(newData);
+    onDataChange(newData);
   };
   
   const handleTextareaInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
@@ -71,7 +81,6 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
   };
 
   useEffect(() => {
-    // Adjust height for all textareas on initial render and when data changes
     if (tableRef.current) {
       const textareas = tableRef.current.querySelectorAll('textarea');
       textareas.forEach(textarea => {
@@ -206,10 +215,9 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
               const y = cell.y + cell.height / 2;
               doc.setLineWidth(0.3);
               doc.setDrawColor(0, 0, 0);
-              // Draw a clean checkmark
-              doc.line(x - 1.5, y - 0.5, x, y + 1.5); // smaller part of check
-              doc.line(x, y + 1.5, x + 2.5, y - 2); // larger part of check
-              data.cell.text = []; // Clear the original '✓' text
+              doc.line(x - 1.5, y - 0.5, x, y + 1.5);
+              doc.line(x, y + 1.5, x + 2.5, y - 2);
+              data.cell.text = [];
             }
           },
           columnStyles: {
