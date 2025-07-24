@@ -42,7 +42,6 @@ const keyMap: { [K in keyof Omit<Product, 'envaseInmediato' | 'envaseMediato' | 
 
 export function DataTable({ initialData, initialValidationErrors }: DataTableProps) {
   const [data, setData] = useState<InvoiceData>(initialData);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [selectedPharmacy, setSelectedPharmacy] = useState('BOTICA FARMA KIDS');
 
   const errorMap = useMemo(() => {
@@ -230,19 +229,19 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
   };
   
   const columns: { key: keyof Product, label: string, isCheckbox?: boolean, widthClass?: string }[] = [
-      { key: 'nombreDelProductoFarmaceutico', label: 'Nombre Producto', widthClass: 'w-[15%]' },
-      { key: 'nombreDelDispositivoMedico', label: 'Dispositivo Médico', widthClass: 'w-[10%]' },
-      { key: 'formaFarmaceutica', label: 'Forma Farmacéutica', widthClass: 'w-[15%]' },
-      { key: 'numeroDeLote', label: 'Nº Lote', widthClass: 'w-[8%]' },
-      { key: 'concentracion', label: 'Concentración', widthClass: 'w-[8%]' },
-      { key: 'presentacion', label: 'Presentación', widthClass: 'w-[8%]' },
-      { key: 'envaseInmediato', label: 'Env. Inm.', isCheckbox: true, widthClass: 'w-[5%]' },
-      { key: 'envaseMediato', label: 'Env. Med.', isCheckbox: true, widthClass: 'w-[5%]' },
-      { key: 'fechaDeVencimiento', label: 'F. Venc.', widthClass: 'w-[8%]' },
-      { key: 'registroSanitario', label: 'Reg. Sanitario', widthClass: 'w-[8%]' },
-      { key: 'cantidadRecibida', label: 'Cant. Rec.', widthClass: 'w-[5%]' },
-      { key: 'condicionesDeAlmacenamiento', label: 'Almacenamiento', widthClass: 'w-[10%]' },
-      { key: 'observaciones', label: 'Observaciones', widthClass: 'w-[10%]' },
+      { key: 'nombreDelProductoFarmaceutico', label: 'Nombre Producto', widthClass: 'min-w-[200px] w-[18%]' },
+      { key: 'nombreDelDispositivoMedico', label: 'Dispositivo Médico', widthClass: 'min-w-[150px] w-[12%]' },
+      { key: 'formaFarmaceutica', label: 'Forma Farmacéutica', widthClass: 'min-w-[200px] w-[15%]' },
+      { key: 'numeroDeLote', label: 'Nº Lote', widthClass: 'min-w-[100px] w-[8%]' },
+      { key: 'concentracion', label: 'Concentración', widthClass: 'min-w-[100px] w-[8%]' },
+      { key: 'presentacion', label: 'Presentación', widthClass: 'min-w-[100px] w-[8%]' },
+      { key: 'envaseInmediato', label: 'Env. Inm.', isCheckbox: true, widthClass: 'min-w-[60px] w-[5%]' },
+      { key: 'envaseMediato', label: 'Env. Med.', isCheckbox: true, widthClass: 'min-w-[60px] w-[5%]' },
+      { key: 'fechaDeVencimiento', label: 'F. Venc.', widthClass: 'min-w-[100px] w-[8%]' },
+      { key: 'registroSanitario', label: 'Reg. Sanitario', widthClass: 'min-w-[120px] w-[8%]' },
+      { key: 'cantidadRecibida', label: 'Cant. Rec.', widthClass: 'min-w-[80px] w-[5%]' },
+      { key: 'condicionesDeAlmacenamiento', label: 'Almacenamiento', widthClass: 'min-w-[150px] w-[10%]' },
+      { key: 'observaciones', label: 'Observaciones', widthClass: 'min-w-[150px] w-[10%]' },
   ];
 
   return (
@@ -293,58 +292,58 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
           </div>
         </CardHeader>
         <CardContent>
-          <div className="w-full overflow-hidden">
-            <Table>
-                <TableHeader>
-                  <TableRow>
-                    {columns.map(c => <TableHead key={c.key} className={c.widthClass}>{c.label}</TableHead>)}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.productos.map((product, rowIndex) => (
-                    <TableRow key={rowIndex}>
-                      {columns.map(col => {
-                          if (col.isCheckbox) {
-                            return (
-                                  <TableCell key={col.key} className="text-center">
-                                      <div className="flex justify-center">
-                                        <Checkbox
-                                            checked={!!product[col.key]}
-                                            onCheckedChange={(checked) => handleInputChange(rowIndex, col.key, !!checked)}
-                                        />
-                                      </div>
-                                  </TableCell>
-                            )
-                          }
-                          
-                          const fieldKey = col.key as keyof typeof keyMap;
-                          const errorKey = `products.${rowIndex}.${keyMap[fieldKey]}`;
-                          const error = errorMap[errorKey];
-                          
-                          return (
-                          <TableCell key={col.key}>
-                              <Tooltip>
-                                  <TooltipTrigger asChild>
-                                      <div className="relative">
-                                      <Textarea
-                                          value={(product[col.key] as string || '').toString()}
-                                          onChange={(e) => handleInputChange(rowIndex, col.key, e.target.value)}
-                                          className={`w-full min-h-[40px] text-xs p-1 ${error ? 'border-destructive ring-destructive ring-1' : ''}`}
-                                          rows={2}
-                                          />
-                                      {error && <AlertCircle className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />}
-                                      </div>
-                                  </TooltipTrigger>
-                                  {error && <TooltipContent><p>{error}</p></TooltipContent>}
-                              </Tooltip>
-                          </TableCell>
-                          );
-                      })}
+           <div className="overflow-x-auto">
+              <Table className="table-fixed w-full">
+                  <TableHeader>
+                    <TableRow>
+                      {columns.map(c => <TableHead key={c.key} className={c.widthClass}>{c.label}</TableHead>)}
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-          </div>
+                  </TableHeader>
+                  <TableBody>
+                    {data.productos.map((product, rowIndex) => (
+                      <TableRow key={rowIndex}>
+                        {columns.map(col => {
+                            if (col.isCheckbox) {
+                              return (
+                                    <TableCell key={col.key} className="text-center">
+                                        <div className="flex justify-center">
+                                          <Checkbox
+                                              checked={!!product[col.key]}
+                                              onCheckedChange={(checked) => handleInputChange(rowIndex, col.key, !!checked)}
+                                          />
+                                        </div>
+                                    </TableCell>
+                              )
+                            }
+                            
+                            const fieldKey = col.key as keyof typeof keyMap;
+                            const errorKey = `products.${rowIndex}.${keyMap[fieldKey]}`;
+                            const error = errorMap[errorKey];
+                            
+                            return (
+                            <TableCell key={col.key}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <div className="relative">
+                                        <Textarea
+                                            value={(product[col.key] as string || '').toString()}
+                                            onChange={(e) => handleInputChange(rowIndex, col.key, e.target.value)}
+                                            className={`w-full min-h-[40px] text-xs p-1 ${error ? 'border-destructive ring-destructive ring-1' : ''}`}
+                                            rows={2}
+                                            />
+                                        {error && <AlertCircle className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />}
+                                        </div>
+                                    </TooltipTrigger>
+                                    {error && <TooltipContent><p>{error}</p></TooltipContent>}
+                                </Tooltip>
+                            </TableCell>
+                            );
+                        })}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+           </div>
         </CardContent>
         <CardFooter className="flex justify-between items-end gap-4">
             <div>
@@ -368,3 +367,5 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
     </TooltipProvider>
   );
 }
+
+    
