@@ -353,7 +353,7 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
                                 <Input
                                   value={(product[col.key] as string || '').toString()}
                                   onChange={(e) => handleInputChange(rowIndex, col.key, e.target.value)}
-                                  className={cn("w-full bg-transparent border-0 rounded-none text-sm p-1 text-center h-auto focus:ring-1 focus:ring-blue-500 focus:bg-white", error ? 'ring-1 ring-destructive' : '')}
+                                  className={cn("w-full bg-transparent border-0 rounded-none text-xs p-1 text-center h-auto focus:ring-1 focus:ring-blue-500 focus:bg-white", error ? 'ring-1 ring-destructive' : '')}
                                 />
                                 {error && <AlertCircle className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />}
                               </div>
