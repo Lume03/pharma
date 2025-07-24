@@ -46,7 +46,7 @@ export default function Home() {
   const handleDataChange = (invoiceIndex: number, newInvoiceData: InvoiceData) => {
     if (!currentHistoryId) return;
 
-    // Update the history in localStorage without forcing a full re-render
+    // This function will be called less frequently (onBlur), reducing localStorage writes.
     const currentHistory = JSON.parse(localStorage.getItem('invoiceHistory') || '[]') as InvoiceHistoryItem[];
     const historyItemIndex = currentHistory.findIndex(item => item.id === currentHistoryId);
 
@@ -54,11 +54,12 @@ export default function Home() {
       currentHistory[historyItemIndex].invoices[invoiceIndex].data = newInvoiceData;
       localStorage.setItem('invoiceHistory', JSON.stringify(currentHistory));
       
-      // Also update the local state for history, so it's correct if we switch views
+      // Update the history state so it's correct if we switch views
       setInvoiceHistory(currentHistory);
     }
     
-    // Update the currently displayed invoices' state locally for UI reactivity
+    // Also update the currently displayed invoices' state locally for UI reactivity,
+    // though this will now happen less often.
     setProcessedInvoices(prevInvoices => {
         if (!prevInvoices) return null;
         const updated = [...prevInvoices];

@@ -41,10 +41,12 @@ const keyMap: { [K in keyof Omit<Product, 'envaseInmediato' | 'envaseMediato' | 
 };
 
 export function DataTable({ initialData, initialValidationErrors, onDataChange }: DataTableProps) {
+  // Local state for immediate UI feedback. This is the key to performance.
   const [data, setData] = useState<InvoiceData>(initialData);
   const [selectedPharmacy, setSelectedPharmacy] = useState('BOTICA FARMA KIDS');
   const tableRef = useRef<HTMLTableElement>(null);
-  
+
+  // Sync with parent component only when initialData changes
   useEffect(() => {
     setData(initialData);
   }, [initialData]);
@@ -57,23 +59,23 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
     return map;
   }, [initialValidationErrors]);
   
-  const handleLocalChange = useCallback((newData: InvoiceData) => {
-    setData(newData);
-    onDataChange(newData);
-  }, [onDataChange]);
+  // This function is now called only when leaving a field, not on every keystroke.
+  const handlePersistChanges = useCallback(() => {
+    onDataChange(data);
+  }, [data, onDataChange]);
   
   const handleHeaderChange = (field: keyof Omit<InvoiceData, 'productos'>, value: string) => {
-    const newData = { ...data, [field]: value };
-    handleLocalChange(newData);
+    setData(prevData => ({ ...prevData, [field]: value }));
   };
 
   const handleProductChange = (rowIndex: number, field: keyof Product, value: string | boolean) => {
-    const updatedProducts = [...data.productos];
-    const currentProduct = { ...updatedProducts[rowIndex] };
-    (currentProduct[field] as any) = value;
-    updatedProducts[rowIndex] = currentProduct;
-    const newData = { ...data, productos: updatedProducts };
-    handleLocalChange(newData);
+    setData(prevData => {
+        const updatedProducts = [...prevData.productos];
+        const currentProduct = { ...updatedProducts[rowIndex] };
+        (currentProduct[field] as any) = value;
+        updatedProducts[rowIndex] = currentProduct;
+        return { ...prevData, productos: updatedProducts };
+    });
   };
   
   const handleTextareaInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
@@ -303,6 +305,7 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
                 id={`proveedor-${initialData.numeroDeFactura}`} 
                 value={data.proveedor} 
                 onChange={(e) => handleHeaderChange('proveedor', e.target.value)}
+                onBlur={handlePersistChanges}
                 onInput={handleTextareaInput}
                 rows={1}
                 className="resize-none overflow-hidden" 
@@ -314,6 +317,7 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
                 id={`numeroDeFactura-${initialData.numeroDeFactura}`} 
                 value={data.numeroDeFactura} 
                 onChange={(e) => handleHeaderChange('numeroDeFactura', e.target.value)}
+                onBlur={handlePersistChanges}
                 onInput={handleTextareaInput}
                 rows={1}
                 className="resize-none overflow-hidden" 
@@ -325,6 +329,7 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
                 id={`fechaDeEmision-${initialData.numeroDeFactura}`} 
                 value={data.fechaDeEmision} 
                 onChange={(e) => handleHeaderChange('fechaDeEmision', e.target.value)} 
+                onBlur={handlePersistChanges}
                 onInput={handleTextareaInput}
                 rows={1}
                 className="resize-none overflow-hidden" 
@@ -357,6 +362,7 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
                                 onCheckedChange={(checked) => {
                                   handleProductChange(rowIndex, col.key, !!checked);
                                 }}
+                                onBlur={handlePersistChanges}
                               />
                             </div>
                           </TableCell>
@@ -375,6 +381,7 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
                                 <Textarea
                                   value={(product[col.key] as string || '').toString()}
                                   onChange={(e) => handleProductChange(rowIndex, col.key, e.target.value)}
+                                  onBlur={handlePersistChanges}
                                   onInput={handleTextareaInput}
                                   rows={1}
                                   className={cn(
