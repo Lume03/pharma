@@ -326,7 +326,7 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
               </TableHeader>
               <TableBody className="bg-white divide-y divide-gray-200">
                 {data.productos.map((product, rowIndex) => (
-                  <TableRow key={rowIndex} className="bg-yellow-50/20 hover:bg-yellow-50/50">
+                  <TableRow key={rowIndex} className="bg-white hover:bg-gray-50">
                     {columns.map(col => {
                       if (col.isCheckbox) {
                         return (
@@ -353,7 +353,7 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
                                 <Input
                                   value={(product[col.key] as string || '').toString()}
                                   onChange={(e) => handleInputChange(rowIndex, col.key, e.target.value)}
-                                  className={cn("w-full bg-transparent border-0 rounded-none text-xs p-1 text-center h-auto focus:ring-1 focus:ring-blue-500 focus:bg-white", error ? 'ring-1 ring-destructive' : '')}
+                                  className={cn("w-full bg-transparent border-0 rounded-none p-1 h-auto focus:ring-1 focus:ring-blue-500 focus:bg-white text-xs", error ? 'ring-1 ring-destructive' : '')}
                                 />
                                 {error && <AlertCircle className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />}
                               </div>
