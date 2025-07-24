@@ -4,7 +4,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import type { InvoiceData, Product, ValidationError } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -21,7 +21,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from '@/lib/utils';
-
 
 interface DataTableProps {
   initialData: InvoiceData;
@@ -43,6 +42,7 @@ const keyMap: { [K in keyof Omit<Product, 'envaseInmediato' | 'envaseMediato' | 
 export function DataTable({ initialData, initialValidationErrors }: DataTableProps) {
   const [data, setData] = useState<InvoiceData>(initialData);
   const [selectedPharmacy, setSelectedPharmacy] = useState('BOTICA FARMA KIDS');
+  const tableRef = useRef<HTMLTableElement>(null);
 
   const errorMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -63,6 +63,23 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
   const handleHeaderChange = (field: keyof Omit<InvoiceData, 'productos'>, value: string) => {
     setData({ ...data, [field]: value });
   };
+  
+  const handleTextareaInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
+      const textarea = e.currentTarget;
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+  };
+
+  useEffect(() => {
+    // Adjust height for all textareas on initial render and when data changes
+    if (tableRef.current) {
+      const textareas = tableRef.current.querySelectorAll('textarea');
+      textareas.forEach(textarea => {
+        textarea.style.height = 'auto';
+        textarea.style.height = `${textarea.scrollHeight}px`;
+      });
+    }
+  }, [data.productos]);
 
   const addRow = () => {
     const newProduct: Product = {
@@ -249,19 +266,19 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
   };
   
   const columns: { key: keyof Product, label: string, isCheckbox?: boolean, width?: string }[] = [
-    { key: 'nombreDelProductoFarmaceutico', label: 'Nombre del Producto Farmacéutico', width: 'w-[150px]' },
-    { key: 'nombreDelDispositivoMedico', label: 'Dispositivo Médico', width: 'w-[150px]' },
-    { key: 'formaFarmaceutica', label: 'Forma Farmacéutica', width: 'w-[150px]' },
-    { key: 'numeroDeLote', label: 'Nº Lote', width: 'w-[120px]' },
-    { key: 'concentracion', label: 'Concentración', width: 'w-[120px]' },
-    { key: 'presentacion', label: 'Presentación', width: 'w-[150px]' },
-    { key: 'envaseInmediato', label: 'Env. Inm.', isCheckbox: true, width: 'w-[80px]' },
-    { key: 'envaseMediato', label: 'Env. Med.', isCheckbox: true, width: 'w-[80px]' },
-    { key: 'fechaDeVencimiento', label: 'F. Venc.', width: 'w-[120px]' },
-    { key: 'registroSanitario', label: 'Reg. Sanitario', width: 'w-[120px]' },
-    { key: 'cantidadRecibida', label: 'Cant. Rec.', width: 'w-[100px]' },
-    { key: 'condicionesDeAlmacenamiento', label: 'Almacenamiento', width: 'w-[150px]' },
-    { key: 'observaciones', label: 'Observaciones', width: 'w-[200px]' },
+    { key: 'nombreDelProductoFarmaceutico', label: 'Nombre del Producto Farmacéutico', width: 'w-[15%]' },
+    { key: 'nombreDelDispositivoMedico', label: 'Dispositivo Médico', width: 'w-[10%]' },
+    { key: 'formaFarmaceutica', label: 'Forma Farmacéutica', width: 'w-[10%]' },
+    { key: 'numeroDeLote', label: 'Nº Lote', width: 'w-[8%]' },
+    { key: 'concentracion', label: 'Concentración', width: 'w-[8%]' },
+    { key: 'presentacion', label: 'Presentación', width: 'w-[10%]' },
+    { key: 'envaseInmediato', label: 'Env. Inm.', isCheckbox: true, width: 'w-[5%]' },
+    { key: 'envaseMediato', label: 'Env. Med.', isCheckbox: true, width: 'w-[5%]' },
+    { key: 'fechaDeVencimiento', label: 'F. Venc.', width: 'w-[8%]' },
+    { key: 'registroSanitario', label: 'Reg. Sanitario', width: 'w-[8%]' },
+    { key: 'cantidadRecibida', label: 'Cant. Rec.', width: 'w-[5%]' },
+    { key: 'condicionesDeAlmacenamiento', label: 'Almacenamiento', width: 'w-[10%]' },
+    { key: 'observaciones', label: 'Observaciones', width: 'w-[10%]' },
   ];
 
   return (
@@ -299,29 +316,50 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
             <div className="space-y-2">
               <Label htmlFor={`proveedor-${initialData.numeroDeFactura}`}>Proveedor</Label>
-              <Input id={`proveedor-${initialData.numeroDeFactura}`} value={data.proveedor} onChange={(e) => handleHeaderChange('proveedor', e.target.value)} />
+              <Textarea 
+                id={`proveedor-${initialData.numeroDeFactura}`} 
+                value={data.proveedor} 
+                onChange={(e) => handleHeaderChange('proveedor', e.target.value)}
+                onInput={handleTextareaInput}
+                rows={1}
+                className="resize-none overflow-hidden" 
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor={`numeroDeFactura-${initialData.numeroDeFactura}`}>Nº de Factura</Label>
-              <Input id={`numeroDeFactura-${initialData.numeroDeFactura}`} value={data.numeroDeFactura} onChange={(e) => handleHeaderChange('numeroDeFactura', e.target.value)} />
+              <Textarea 
+                id={`numeroDeFactura-${initialData.numeroDeFactura}`} 
+                value={data.numeroDeFactura} 
+                onChange={(e) => handleHeaderChange('numeroDeFactura', e.target.value)}
+                onInput={handleTextareaInput}
+                rows={1}
+                className="resize-none overflow-hidden" 
+               />
             </div>
             <div className="space-y-2">
               <Label htmlFor={`fechaDeEmision-${initialData.numeroDeFactura}`}>Fecha de Emisión</Label>
-              <Input id={`fechaDeEmision-${initialData.numeroDeFactura}`} value={data.fechaDeEmision} onChange={(e) => handleHeaderChange('fechaDeEmision', e.target.value)} />
+              <Textarea 
+                id={`fechaDeEmision-${initialData.numeroDeFactura}`} 
+                value={data.fechaDeEmision} 
+                onChange={(e) => handleHeaderChange('fechaDeEmision', e.target.value)} 
+                onInput={handleTextareaInput}
+                rows={1}
+                className="resize-none overflow-hidden" 
+              />
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto border rounded-lg">
-            <Table className="min-w-full divide-y divide-gray-200">
+            <Table ref={tableRef} className="min-w-full divide-y divide-gray-200">
               <TableHeader className="bg-gray-50">
                 <TableRow>
                   {columns.map(c => (
-                    <TableHead key={c.key} className={cn("px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider", c.width)}>
+                    <TableHead key={c.key} className={cn("px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider", c.width)}>
                       {c.label}
                     </TableHead>
                   ))}
-                   <TableHead className="w-[80px] text-center">Acción</TableHead>
+                   <TableHead className="w-[5%] text-center">Acción</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody className="bg-white divide-y divide-gray-200">
@@ -330,8 +368,8 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
                     {columns.map(col => {
                       if (col.isCheckbox) {
                         return (
-                          <TableCell key={col.key} className="px-4 py-2 whitespace-nowrap">
-                            <div className="flex justify-center">
+                          <TableCell key={col.key} className="p-1 align-top">
+                            <div className="flex justify-center pt-1">
                               <Checkbox
                                 checked={!!product[col.key]}
                                 onCheckedChange={(checked) => handleInputChange(rowIndex, col.key, !!checked)}
@@ -346,16 +384,21 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
                       const error = errorMap[errorKey];
                       
                       return (
-                        <TableCell key={col.key} className="px-4 py-2 whitespace-nowrap">
+                        <TableCell key={col.key} className="p-0 align-top">
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <div className="relative">
-                                <Input
+                              <div className="relative h-full">
+                                <Textarea
                                   value={(product[col.key] as string || '').toString()}
                                   onChange={(e) => handleInputChange(rowIndex, col.key, e.target.value)}
-                                  className={cn("w-full bg-transparent border-0 rounded-none p-1 h-auto focus:ring-1 focus:ring-blue-500 focus:bg-white text-xs", error ? 'ring-1 ring-destructive' : '')}
+                                  onInput={handleTextareaInput}
+                                  rows={1}
+                                  className={cn(
+                                    "w-full bg-transparent border-0 rounded-none p-2 h-full focus:ring-1 focus:ring-blue-500 focus:bg-white text-xs resize-none overflow-hidden", 
+                                    error ? 'ring-1 ring-destructive' : ''
+                                  )}
                                 />
-                                {error && <AlertCircle className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />}
+                                {error && <AlertCircle className="absolute right-2 top-2 h-4 w-4 text-destructive" />}
                               </div>
                             </TooltipTrigger>
                             {error && <TooltipContent><p>{error}</p></TooltipContent>}
@@ -363,8 +406,8 @@ export function DataTable({ initialData, initialValidationErrors }: DataTablePro
                         </TableCell>
                       );
                     })}
-                     <TableCell className="px-4 py-2 text-center">
-                      <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-100 rounded-full h-8 w-8" onClick={() => removeRow(rowIndex)}>
+                     <TableCell className="p-1 align-top text-center">
+                      <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700 hover:bg-red-100 rounded-full h-8 w-8 mt-1" onClick={() => removeRow(rowIndex)}>
                         <XCircle className="h-5 w-5" />
                       </Button>
                     </TableCell>
