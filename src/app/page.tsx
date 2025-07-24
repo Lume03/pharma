@@ -43,30 +43,22 @@ export default function Home() {
     }
   }, []);
 
-  const updateHistory = (newHistory: InvoiceHistoryItem[]) => {
-    setInvoiceHistory(newHistory);
-    localStorage.setItem('invoiceHistory', JSON.stringify(newHistory));
-  };
-  
   const handleDataChange = (invoiceIndex: number, newInvoiceData: InvoiceData) => {
     if (!currentHistoryId) return;
 
-    const newHistory = invoiceHistory.map(historyItem => {
-        if (historyItem.id === currentHistoryId) {
-            const updatedInvoices = historyItem.invoices.map((invoice, index) => {
-                if (index === invoiceIndex) {
-                    return { ...invoice, data: newInvoiceData };
-                }
-                return invoice;
-            });
-            return { ...historyItem, invoices: updatedInvoices };
-        }
-        return historyItem;
-    });
+    // Update the history in localStorage without forcing a full re-render
+    const currentHistory = JSON.parse(localStorage.getItem('invoiceHistory') || '[]') as InvoiceHistoryItem[];
+    const historyItemIndex = currentHistory.findIndex(item => item.id === currentHistoryId);
 
-    updateHistory(newHistory);
-
-    // Also update the currently displayed invoices
+    if (historyItemIndex > -1) {
+      currentHistory[historyItemIndex].invoices[invoiceIndex].data = newInvoiceData;
+      localStorage.setItem('invoiceHistory', JSON.stringify(currentHistory));
+      
+      // Also update the local state for history, so it's correct if we switch views
+      setInvoiceHistory(currentHistory);
+    }
+    
+    // Update the currently displayed invoices' state locally for UI reactivity
     setProcessedInvoices(prevInvoices => {
         if (!prevInvoices) return null;
         const updated = [...prevInvoices];
@@ -135,7 +127,10 @@ export default function Home() {
         processedAt: new Date().toISOString(),
         invoices: allProcessedInvoices,
     };
-    updateHistory([newHistoryItem, ...invoiceHistory]);
+    const newHistory = [newHistoryItem, ...invoiceHistory];
+    setInvoiceHistory(newHistory);
+    localStorage.setItem('invoiceHistory', JSON.stringify(newHistory));
+
 
     setProcessedInvoices(allProcessedInvoices);
     setCurrentHistoryId(newHistoryItemId);
@@ -150,7 +145,8 @@ export default function Home() {
 
   const handleDeleteFromHistory = (id: string) => {
     const newHistory = invoiceHistory.filter(item => item.id !== id);
-    updateHistory(newHistory);
+    setInvoiceHistory(newHistory);
+    localStorage.setItem('invoiceHistory', JSON.stringify(newHistory));
   };
 
   const handleStartOver = () => {

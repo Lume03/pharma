@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import type { InvoiceData, Product, ValidationError } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Download, AlertCircle, Save } from 'lucide-react';
+import { Download, AlertCircle } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -42,13 +42,11 @@ const keyMap: { [K in keyof Omit<Product, 'envaseInmediato' | 'envaseMediato' | 
 
 export function DataTable({ initialData, initialValidationErrors, onDataChange }: DataTableProps) {
   const [data, setData] = useState<InvoiceData>(initialData);
-  const [hasChanges, setHasChanges] = useState(false);
   const [selectedPharmacy, setSelectedPharmacy] = useState('BOTICA FARMA KIDS');
   const tableRef = useRef<HTMLTableElement>(null);
   
   useEffect(() => {
     setData(initialData);
-    setHasChanges(false);
   }, [initialData]);
 
   const errorMap = useMemo(() => {
@@ -59,27 +57,25 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
     return map;
   }, [initialValidationErrors]);
   
-  const handleLocalChange = (rowIndex: number, field: keyof Product, value: string | boolean) => {
+  const handleLocalChange = useCallback((newData: InvoiceData) => {
+    setData(newData);
+    onDataChange(newData);
+  }, [onDataChange]);
+  
+  const handleHeaderChange = (field: keyof Omit<InvoiceData, 'productos'>, value: string) => {
+    const newData = { ...data, [field]: value };
+    handleLocalChange(newData);
+  };
+
+  const handleProductChange = (rowIndex: number, field: keyof Product, value: string | boolean) => {
     const updatedProducts = [...data.productos];
     const currentProduct = { ...updatedProducts[rowIndex] };
     (currentProduct[field] as any) = value;
     updatedProducts[rowIndex] = currentProduct;
     const newData = { ...data, productos: updatedProducts };
-    setData(newData);
-    setHasChanges(true);
+    handleLocalChange(newData);
   };
   
-  const handleHeaderLocalChange = (field: keyof Omit<InvoiceData, 'productos'>, value: string) => {
-    const newData = { ...data, [field]: value };
-    setData(newData);
-    setHasChanges(true);
-  };
-  
-  const handleSaveChanges = () => {
-    onDataChange(data);
-    setHasChanges(false);
-  };
-
   const handleTextareaInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
       const textarea = e.currentTarget;
       textarea.style.height = 'auto';
@@ -296,13 +292,9 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
             <div>
               <CardTitle>Formato de Recepción</CardTitle>
               <CardDescription>
-                Verifique los datos extraídos. Edite cualquier campo y guarde los cambios antes de generar el PDF.
+                Verifique los datos extraídos. Edite cualquier campo y los cambios se guardarán automáticamente.
               </CardDescription>
             </div>
-             <Button onClick={handleSaveChanges} disabled={!hasChanges}>
-                <Save className="mr-2 h-4 w-4" />
-                Guardar Cambios
-            </Button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
             <div className="space-y-2">
@@ -310,7 +302,7 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
               <Textarea 
                 id={`proveedor-${initialData.numeroDeFactura}`} 
                 value={data.proveedor} 
-                onChange={(e) => handleHeaderLocalChange('proveedor', e.target.value)}
+                onChange={(e) => handleHeaderChange('proveedor', e.target.value)}
                 onInput={handleTextareaInput}
                 rows={1}
                 className="resize-none overflow-hidden" 
@@ -321,7 +313,7 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
               <Textarea 
                 id={`numeroDeFactura-${initialData.numeroDeFactura}`} 
                 value={data.numeroDeFactura} 
-                onChange={(e) => handleHeaderLocalChange('numeroDeFactura', e.target.value)}
+                onChange={(e) => handleHeaderChange('numeroDeFactura', e.target.value)}
                 onInput={handleTextareaInput}
                 rows={1}
                 className="resize-none overflow-hidden" 
@@ -332,7 +324,7 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
               <Textarea 
                 id={`fechaDeEmision-${initialData.numeroDeFactura}`} 
                 value={data.fechaDeEmision} 
-                onChange={(e) => handleHeaderLocalChange('fechaDeEmision', e.target.value)} 
+                onChange={(e) => handleHeaderChange('fechaDeEmision', e.target.value)} 
                 onInput={handleTextareaInput}
                 rows={1}
                 className="resize-none overflow-hidden" 
@@ -363,7 +355,7 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
                               <Checkbox
                                 checked={!!product[col.key]}
                                 onCheckedChange={(checked) => {
-                                  handleLocalChange(rowIndex, col.key, !!checked);
+                                  handleProductChange(rowIndex, col.key, !!checked);
                                 }}
                               />
                             </div>
@@ -382,7 +374,7 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
                               <div className="relative h-full">
                                 <Textarea
                                   value={(product[col.key] as string || '').toString()}
-                                  onChange={(e) => handleLocalChange(rowIndex, col.key, e.target.value)}
+                                  onChange={(e) => handleProductChange(rowIndex, col.key, e.target.value)}
                                   onInput={handleTextareaInput}
                                   rows={1}
                                   className={cn(
