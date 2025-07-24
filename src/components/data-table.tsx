@@ -58,22 +58,24 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
     return map;
   }, [initialValidationErrors]);
   
-  const handleInputChange = (rowIndex: number, field: keyof Product, value: string | boolean) => {
+  const handleLocalChange = (rowIndex: number, field: keyof Product, value: string | boolean) => {
     const updatedProducts = [...data.productos];
     const currentProduct = { ...updatedProducts[rowIndex] };
     (currentProduct[field] as any) = value;
     updatedProducts[rowIndex] = currentProduct;
     const newData = { ...data, productos: updatedProducts };
     setData(newData);
-    onDataChange(newData);
   };
   
-  const handleHeaderChange = (field: keyof Omit<InvoiceData, 'productos'>, value: string) => {
+  const handleHeaderLocalChange = (field: keyof Omit<InvoiceData, 'productos'>, value: string) => {
     const newData = { ...data, [field]: value };
     setData(newData);
-    onDataChange(newData);
   };
   
+  const handleSaveChanges = () => {
+    onDataChange(data);
+  };
+
   const handleTextareaInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
       const textarea = e.currentTarget;
       textarea.style.height = 'auto';
@@ -296,7 +298,8 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
               <Textarea 
                 id={`proveedor-${initialData.numeroDeFactura}`} 
                 value={data.proveedor} 
-                onChange={(e) => handleHeaderChange('proveedor', e.target.value)}
+                onChange={(e) => handleHeaderLocalChange('proveedor', e.target.value)}
+                onBlur={handleSaveChanges}
                 onInput={handleTextareaInput}
                 rows={1}
                 className="resize-none overflow-hidden" 
@@ -307,7 +310,8 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
               <Textarea 
                 id={`numeroDeFactura-${initialData.numeroDeFactura}`} 
                 value={data.numeroDeFactura} 
-                onChange={(e) => handleHeaderChange('numeroDeFactura', e.target.value)}
+                onChange={(e) => handleHeaderLocalChange('numeroDeFactura', e.target.value)}
+                onBlur={handleSaveChanges}
                 onInput={handleTextareaInput}
                 rows={1}
                 className="resize-none overflow-hidden" 
@@ -318,7 +322,8 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
               <Textarea 
                 id={`fechaDeEmision-${initialData.numeroDeFactura}`} 
                 value={data.fechaDeEmision} 
-                onChange={(e) => handleHeaderChange('fechaDeEmision', e.target.value)} 
+                onChange={(e) => handleHeaderLocalChange('fechaDeEmision', e.target.value)} 
+                onBlur={handleSaveChanges}
                 onInput={handleTextareaInput}
                 rows={1}
                 className="resize-none overflow-hidden" 
@@ -348,7 +353,10 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
                             <div className="flex justify-center pt-1">
                               <Checkbox
                                 checked={!!product[col.key]}
-                                onCheckedChange={(checked) => handleInputChange(rowIndex, col.key, !!checked)}
+                                onCheckedChange={(checked) => {
+                                  handleLocalChange(rowIndex, col.key, !!checked);
+                                  handleSaveChanges();
+                                }}
                               />
                             </div>
                           </TableCell>
@@ -366,7 +374,8 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
                               <div className="relative h-full">
                                 <Textarea
                                   value={(product[col.key] as string || '').toString()}
-                                  onChange={(e) => handleInputChange(rowIndex, col.key, e.target.value)}
+                                  onChange={(e) => handleLocalChange(rowIndex, col.key, e.target.value)}
+                                  onBlur={handleSaveChanges}
                                   onInput={handleTextareaInput}
                                   rows={1}
                                   className={cn(
