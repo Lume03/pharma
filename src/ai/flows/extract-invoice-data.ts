@@ -21,23 +21,23 @@ const ExtractInvoiceDataInputSchema = z.object({
 export type ExtractInvoiceDataInput = z.infer<typeof ExtractInvoiceDataInputSchema>;
 
 const InvoiceItemSchema = z.object({
-  nombreDelProductoFarmaceutico: z.string().describe('Nombre del producto farmacéutico.'),
+  nombreDelProductoFarmaceutico: z.string().optional().describe('Nombre del producto farmacéutico.'),
   nombreDelDispositivoMedico: z.string().optional().describe('Nombre del dispositivo médico.'),
-  formaFarmaceutica: z.string().describe('Forma farmacéutica (p. ej., CAJA X 100 CAPS).'),
-  numeroDeLote: z.string().describe('Número de lote.'),
-  concentracion: z.string().describe('Concentración (p. ej., 875 mg + 125 mg).'),
-  presentacion: z.string().describe('Presentación (p. ej., CAJA X 1 VIAL + SOLV).'),
-  fechaDeVencimiento: z.string().describe('Fecha de vencimiento (YYYY-MM-DD).'),
+  formaFarmaceutica: z.string().optional().describe('Forma farmacéutica (p. ej., CAJA X 100 CAPS).'),
+  numeroDeLote: z.string().optional().describe('Número de lote.'),
+  concentracion: z.string().optional().describe('Concentración (p. ej., 875 mg + 125 mg).'),
+  presentacion: z.string().optional().describe('Presentación (p. ej., CAJA X 1 VIAL + SOLV).'),
+  fechaDeVencimiento: z.string().optional().describe('Fecha de vencimiento (YYYY-MM-DD).'),
   registroSanitario: z.string().optional().describe('Número de registro sanitario.'),
-  cantidadRecibida: z.string().describe('Cantidad recibida.'),
+  cantidadRecibida: z.string().optional().describe('Cantidad recibida.'),
   condicionesDeAlmacenamiento: z.string().optional().describe('Condiciones de almacenamiento.'),
   observaciones: z.string().optional().describe('Observaciones.'),
 });
 
 const SingleInvoiceSchema = z.object({
-  proveedor: z.string().describe('El nombre del proveedor.'),
-  numeroDeFactura: z.string().describe('El número de factura.'),
-  fechaDeEmision: z.string().describe('La fecha de emisión de la factura (YYYY-MM-DD).'),
+  proveedor: z.string().optional().describe('El nombre del proveedor.'),
+  numeroDeFactura: z.string().optional().describe('El número de factura.'),
+  fechaDeEmision: z.string().optional().describe('La fecha de emisión de la factura (YYYY-MM-DD).'),
   productos: z.array(InvoiceItemSchema).describe('Array de productos en la factura.'),
 });
 

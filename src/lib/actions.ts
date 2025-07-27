@@ -26,27 +26,35 @@ export async function extractAndValidateInvoiceAction(invoiceDataUri: string): P
 
     // 2. Validate each extracted invoice
     for (const invoice of extractionResult.invoices) {
+        // Ensure products is always an array
+        const products = Array.isArray(invoice.productos) ? invoice.productos : [];
+
         const validationInput = {
-            supplier: invoice.proveedor,
-            invoiceNumber: invoice.numeroDeFactura,
-            invoiceDate: invoice.fechaDeEmision,
-            products: invoice.productos.map(p => ({
-                productName: p.nombreDelProductoFarmaceutico,
+            supplier: invoice.proveedor || '',
+            invoiceNumber: invoice.numeroDeFactura || '',
+            invoiceDate: invoice.fechaDeEmision || '',
+            products: products.map(p => ({
+                productName: p.nombreDelProductoFarmaceutico || '',
                 medicalDeviceName: p.nombreDelDispositivoMedico || '',
-                form: p.formaFarmaceutica,
-                lotNumber: p.numeroDeLote,
-                concentration: p.concentracion,
-                presentation: p.presentacion,
-                expirationDate: p.fechaDeVencimiento,
+                form: p.formaFarmaceutica || '',
+                lotNumber: p.numeroDeLote || '',
+                concentration: p.concentracion || '',
+                presentation: p.presentacion || '',
+                expirationDate: p.fechaDeVencimiento || '',
                 registrationNumber: p.registroSanitario || '',
-                quantityReceived: String(p.cantidadRecibida),
+                quantityReceived: String(p.cantidadRecibida || '0'),
             })),
         };
 
         const validationResult = await validateExtractedData(validationInput);
         
         processedInvoices.push({
-            data: invoice,
+            data: {
+              proveedor: invoice.proveedor || '',
+              numeroDeFactura: invoice.numeroDeFactura || '',
+              fechaDeEmision: invoice.fechaDeEmision || '',
+              productos: products,
+            },
             errors: validationResult.validationErrors,
         });
     }
