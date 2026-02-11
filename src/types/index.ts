@@ -36,4 +36,5 @@ export interface InvoiceHistoryItem {
   fileName: string;
   processedAt: string;
   invoices: ProcessedInvoice[];
+  driveFileId?: string;
 }

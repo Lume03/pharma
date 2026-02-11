@@ -44,14 +44,36 @@ const keyMap: { [K in keyof Omit<Product, 'envaseInmediato' | 'envaseMediato' | 
 export function DataTable({ initialData, initialValidationErrors, onDataChange }: DataTableProps) {
   // The component now manages its own state. This is the key to performance.
   // It's initialized once and then all edits happen locally.
-  const [data, setData] = useState<InvoiceData>(initialData);
+  // Sanitize null/undefined values to empty strings on load
+  const sanitizeData = (d: InvoiceData): InvoiceData => ({
+    ...d,
+    proveedor: d.proveedor ?? '',
+    numeroDeFactura: d.numeroDeFactura ?? '',
+    fechaDeEmision: d.fechaDeEmision ?? '',
+    productos: d.productos.map(p => ({
+      ...p,
+      nombreDelProductoFarmaceutico: p.nombreDelProductoFarmaceutico ?? '',
+      nombreDelDispositivoMedico: p.nombreDelDispositivoMedico ?? '',
+      formaFarmaceutica: p.formaFarmaceutica ?? '',
+      numeroDeLote: p.numeroDeLote ?? '',
+      concentracion: p.concentracion ?? '',
+      presentacion: p.presentacion ?? '',
+      fechaDeVencimiento: p.fechaDeVencimiento ?? '',
+      registroSanitario: p.registroSanitario ?? '',
+      cantidadRecibida: p.cantidadRecibida ?? '',
+      condicionesDeAlmacenamiento: p.condicionesDeAlmacenamiento ?? '',
+      observaciones: p.observaciones ?? '',
+    })),
+  });
+
+  const [data, setData] = useState<InvoiceData>(() => sanitizeData(initialData));
   const [selectedPharmacy, setSelectedPharmacy] = useState('BOTICA FARMA KIDS');
   const tableRef = useRef<HTMLTableElement>(null);
 
   // Sync with parent only when the initialData prop *itself* changes (e.g., loading a new invoice)
   // This prevents re-renders on every keystroke from the parent.
   useEffect(() => {
-    setData(initialData);
+    setData(sanitizeData(initialData));
   }, [initialData]);
 
   const errorMap = useMemo(() => {
@@ -61,24 +83,24 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
     });
     return map;
   }, [initialValidationErrors]);
-  
+
   // This function is called only when leaving a field.
   // It communicates the entire updated invoice data back to the parent.
   const handlePersistChanges = useCallback(() => {
     onDataChange(data);
   }, [data, onDataChange]);
-  
+
   const handleHeaderChange = (field: keyof Omit<InvoiceData, 'productos'>, value: string) => {
     setData(prevData => ({ ...prevData, [field]: value }));
   };
 
   const handleProductChange = (rowIndex: number, field: keyof Product, value: string | boolean) => {
     setData(prevData => {
-        const updatedProducts = [...prevData.productos];
-        const currentProduct = { ...updatedProducts[rowIndex] };
-        (currentProduct[field] as any) = value;
-        updatedProducts[rowIndex] = currentProduct;
-        return { ...prevData, productos: updatedProducts };
+      const updatedProducts = [...prevData.productos];
+      const currentProduct = { ...updatedProducts[rowIndex] };
+      (currentProduct[field] as any) = value;
+      updatedProducts[rowIndex] = currentProduct;
+      return { ...prevData, productos: updatedProducts };
     });
   };
 
@@ -105,164 +127,164 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
     const numDocuments = products.length > 0 ? Math.ceil(products.length / chunkSize) : 1;
 
     for (let i = 0; i < numDocuments; i++) {
-        const doc = new jsPDF({ orientation: 'landscape' });
-        const pageW = doc.internal.pageSize.getWidth();
-        
-        const logoId = 'farma-kids-logo';
-        const logoEl = document.getElementById(logoId);
-        if (logoEl) {
-          try {
-            doc.addImage(logoEl as HTMLImageElement, 'PNG', 15, 8, 20, 20);
-          } catch (e) {
-            console.error("Error adding logo image to PDF:", e)
-          }
+      const doc = new jsPDF({ orientation: 'landscape' });
+      const pageW = doc.internal.pageSize.getWidth();
+
+      const logoId = 'farma-kids-logo';
+      const logoEl = document.getElementById(logoId);
+      if (logoEl) {
+        try {
+          doc.addImage(logoEl as HTMLImageElement, 'PNG', 15, 8, 20, 20);
+        } catch (e) {
+          console.error("Error adding logo image to PDF:", e)
         }
+      }
 
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text(selectedPharmacy, pageW / 2, 12, { align: 'center' });
-        
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        doc.text('POES 1: RECEPCION DE PRODUCTOS FARMACEUTICOS, DISPOSITIVOS MEDICOS Y PRODUCTOS SANITARIOS', pageW / 2, 18, { align: 'center' });
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text(selectedPharmacy, pageW / 2, 12, { align: 'center' });
 
-        const formatCode = selectedPharmacy === 'BOTICA FARMA KIDS' ? 'F-BFKIDS-10' : 'F-BTPHARMA-10';
-        doc.text(`FORMATO DE RECEPCION: ${formatCode}`, pageW / 2, 23, { align: 'center' });
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text('POES 1: RECEPCION DE PRODUCTOS FARMACEUTICOS, DISPOSITIVOS MEDICOS Y PRODUCTOS SANITARIOS', pageW / 2, 18, { align: 'center' });
+
+      const formatCode = selectedPharmacy === 'BOTICA FARMA KIDS' ? 'F-BFKIDS-10' : 'F-BTPHARMA-10';
+      doc.text(`FORMATO DE RECEPCION: ${formatCode}`, pageW / 2, 23, { align: 'center' });
 
 
-        const detailsY = 35;
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.text('PROVEEDOR:', 15, detailsY);
-        doc.text('N° DE FACTURA:', 15, detailsY + 7);
-        doc.text('FECHA:', pageW - 60, detailsY);
+      const detailsY = 35;
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('PROVEEDOR:', 15, detailsY);
+      doc.text('N° DE FACTURA:', 15, detailsY + 7);
+      doc.text('FECHA:', pageW - 60, detailsY);
 
-        doc.setFont('helvetica', 'normal');
-        doc.text(data.proveedor, 50, detailsY);
-        doc.text(data.numeroDeFactura, 50, detailsY + 7);
-        doc.text(data.fechaDeEmision, pageW - 40, detailsY);
+      doc.setFont('helvetica', 'normal');
+      doc.text(data.proveedor, 50, detailsY);
+      doc.text(data.numeroDeFactura, 50, detailsY + 7);
+      doc.text(data.fechaDeEmision, pageW - 40, detailsY);
 
-        doc.setDrawColor(0);
-        doc.line(48, detailsY + 1, pageW / 2, detailsY + 1);
-        doc.line(48, detailsY + 8, pageW / 2, detailsY + 8);
-        doc.line(pageW - 38, detailsY + 1, pageW - 15, detailsY + 1);
+      doc.setDrawColor(0);
+      doc.line(48, detailsY + 1, pageW / 2, detailsY + 1);
+      doc.line(48, detailsY + 8, pageW / 2, detailsY + 8);
+      doc.line(pageW - 38, detailsY + 1, pageW - 15, detailsY + 1);
 
-        const tableHead = [
-          'NOMBRE DEL PRODUCTO FARMACEUTICO',
-          'NOMBRE DEL DISPOSITIVO MEDICO',
-          'FORMA FARMACEUTICA',
-          'N° DE LOTE',
-          'CONCENTRACION',
-          'PRESENTACION',
-          'ENVASE INMEDIATO',
-          'ENVASE MEDIATO',
-          'FECHA DE VENCIMIENTO',
-          'REGISTRO SANITARIO',
-          'CANTIDAD RECIBIDA',
-          'CONDICIONES DE ALMACENAMIENTO',
-          'OBSERVACIONES',
+      const tableHead = [
+        'NOMBRE DEL PRODUCTO FARMACEUTICO',
+        'NOMBRE DEL DISPOSITIVO MEDICO',
+        'FORMA FARMACEUTICA',
+        'N° DE LOTE',
+        'CONCENTRACION',
+        'PRESENTACION',
+        'ENVASE INMEDIATO',
+        'ENVASE MEDIATO',
+        'FECHA DE VENCIMIENTO',
+        'REGISTRO SANITARIO',
+        'CANTIDAD RECIBIDA',
+        'CONDICIONES DE ALMACENAMIENTO',
+        'OBSERVACIONES',
+      ];
+
+      const productChunk = products.slice(i * chunkSize, (i + 1) * chunkSize);
+
+      const tableBody = productChunk.map(p => {
+        const originalValues = [
+          p.nombreDelProductoFarmaceutico,
+          p.nombreDelDispositivoMedico,
+          p.formaFarmaceutica,
+          p.numeroDeLote,
+          p.concentracion,
+          p.presentacion,
+          p.envaseInmediato,
+          p.envaseMediato,
+          p.fechaDeVencimiento,
+          p.registroSanitario,
+          p.cantidadRecibida,
+          p.condicionesDeAlmacenamiento,
+          p.observaciones,
         ];
-        
-        const productChunk = products.slice(i * chunkSize, (i + 1) * chunkSize);
-        
-        const tableBody = productChunk.map(p => {
-          const originalValues = [
-            p.nombreDelProductoFarmaceutico,
-            p.nombreDelDispositivoMedico,
-            p.formaFarmaceutica,
-            p.numeroDeLote,
-            p.concentracion,
-            p.presentacion,
-            p.envaseInmediato,
-            p.envaseMediato,
-            p.fechaDeVencimiento,
-            p.registroSanitario,
-            p.cantidadRecibida,
-            p.condicionesDeAlmacenamiento,
-            p.observaciones,
-          ];
-          
-          return originalValues.map(val => {
-            if (val === true) return '✓';
-            if (val === false || val === undefined || val === null) return '';
-            return String(val);
-          });
+
+        return originalValues.map(val => {
+          if (val === true) return '✓';
+          if (val === false || val === undefined || val === null) return '';
+          return String(val);
         });
+      });
 
-        const requiredRows = 12;
-        while (tableBody.length < requiredRows) {
-            tableBody.push(Array(tableHead.length).fill(''));
-        }
+      const requiredRows = 12;
+      while (tableBody.length < requiredRows) {
+        tableBody.push(Array(tableHead.length).fill(''));
+      }
 
-        autoTable(doc, {
-          head: [tableHead],
-          body: tableBody,
-          startY: detailsY + 15,
-          theme: 'grid',
-          headStyles: { 
-              fillColor: '#FFFFFF', 
-              textColor: 0, 
-              fontSize: 6,
-              lineWidth: 0.1,
-              lineColor: [0, 0, 0],
-              halign: 'center',
-              valign: 'middle'
-          },
-          bodyStyles: { 
-              fontSize: 7,
-              lineWidth: 0.1,
-              lineColor: [0, 0, 0],
-              minCellHeight: 8,
-              cellPadding: 1,
-              valign: 'middle',
-              halign: 'center'
-          },
-          didDrawCell: (data) => {
-            if (data.cell.section === 'body' && (data.column.index === 6 || data.column.index === 7) && data.cell.raw === '✓') {
-              const cell = data.cell;
-              const x = cell.x + cell.width / 2;
-              const y = cell.y + cell.height / 2;
-              doc.setLineWidth(0.3);
-              doc.setDrawColor(0, 0, 0);
-              doc.line(x - 1.5, y - 0.5, x, y + 1.5);
-              doc.line(x, y + 1.5, x + 2.5, y - 2);
-              data.cell.text = [];
-            }
-          },
-          columnStyles: {
-            0: { cellWidth: 30, halign: 'left' },
-            1: { cellWidth: 30, halign: 'left' },
-            2: { cellWidth: 30, halign: 'left' },
-            3: { cellWidth: 20 },
-            4: { cellWidth: 20 },
-            5: { cellWidth: 20 },
-            6: { cellWidth: 15 },
-            7: { cellWidth: 15 },
-            8: { cellWidth: 20 },
-            9: { cellWidth: 20 },
-            10: { cellWidth: 15 },
-            11: { cellWidth: 20, halign: 'left' },
-            12: { cellWidth: 'auto', halign: 'left' },
+      autoTable(doc, {
+        head: [tableHead],
+        body: tableBody,
+        startY: detailsY + 15,
+        theme: 'grid',
+        headStyles: {
+          fillColor: '#FFFFFF',
+          textColor: 0,
+          fontSize: 6,
+          lineWidth: 0.1,
+          lineColor: [0, 0, 0],
+          halign: 'center',
+          valign: 'middle'
+        },
+        bodyStyles: {
+          fontSize: 7,
+          lineWidth: 0.1,
+          lineColor: [0, 0, 0],
+          minCellHeight: 8,
+          cellPadding: 1,
+          valign: 'middle',
+          halign: 'center'
+        },
+        didDrawCell: (data) => {
+          if (data.cell.section === 'body' && (data.column.index === 6 || data.column.index === 7) && data.cell.raw === '✓') {
+            const cell = data.cell;
+            const x = cell.x + cell.width / 2;
+            const y = cell.y + cell.height / 2;
+            doc.setLineWidth(0.3);
+            doc.setDrawColor(0, 0, 0);
+            doc.line(x - 1.5, y - 0.5, x, y + 1.5);
+            doc.line(x, y + 1.5, x + 2.5, y - 2);
+            data.cell.text = [];
           }
-        });
-        
-        const finalY = (doc as any).lastAutoTable.finalY;
-        const signatureY = finalY + 20;
+        },
+        columnStyles: {
+          0: { cellWidth: 30, halign: 'left' },
+          1: { cellWidth: 30, halign: 'left' },
+          2: { cellWidth: 30, halign: 'left' },
+          3: { cellWidth: 20 },
+          4: { cellWidth: 20 },
+          5: { cellWidth: 20 },
+          6: { cellWidth: 15 },
+          7: { cellWidth: 15 },
+          8: { cellWidth: 20 },
+          9: { cellWidth: 20 },
+          10: { cellWidth: 15 },
+          11: { cellWidth: 20, halign: 'left' },
+          12: { cellWidth: 'auto', halign: 'left' },
+        }
+      });
 
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        
-        doc.line(20, signatureY, 80, signatureY);
-        doc.text('RECEPCIONADO POR:', 50, signatureY + 5, { align: 'center' });
-        
-        doc.line(pageW - 80, signatureY, pageW - 20, signatureY);
-        doc.text('DIRECTOR TECNICO:', pageW - 50, signatureY + 5, { align: 'center' });
+      const finalY = (doc as any).lastAutoTable.finalY;
+      const signatureY = finalY + 20;
 
-        const pageSuffix = numDocuments > 1 ? `_parte_${i + 1}` : '';
-        doc.save(`recepcion_${data.numeroDeFactura}${pageSuffix}.pdf`);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+
+      doc.line(20, signatureY, 80, signatureY);
+      doc.text('RECEPCIONADO POR:', 50, signatureY + 5, { align: 'center' });
+
+      doc.line(pageW - 80, signatureY, pageW - 20, signatureY);
+      doc.text('DIRECTOR TECNICO:', pageW - 50, signatureY + 5, { align: 'center' });
+
+      const pageSuffix = numDocuments > 1 ? `_parte_${i + 1}` : '';
+      doc.save(`recepcion_${data.numeroDeFactura}${pageSuffix}.pdf`);
     }
   };
-  
+
   const columns: { key: keyof Product, label: string, isCheckbox?: boolean, width?: string }[] = [
     { key: 'nombreDelProductoFarmaceutico', label: 'Nombre del Producto Farmacéutico', width: 'w-[15%]' },
     { key: 'nombreDelDispositivoMedico', label: 'Dispositivo Médico', width: 'w-[10%]' },
@@ -306,38 +328,38 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
             <div className="space-y-2">
               <Label htmlFor={`proveedor-${initialData.numeroDeFactura}`}>Proveedor</Label>
-              <Textarea 
-                id={`proveedor-${initialData.numeroDeFactura}`} 
-                value={data.proveedor} 
+              <Textarea
+                id={`proveedor-${initialData.numeroDeFactura}`}
+                value={data.proveedor}
                 onChange={(e) => handleHeaderChange('proveedor', e.target.value)}
                 onBlur={handlePersistChanges}
                 onInput={handleTextareaInput}
                 rows={1}
-                className="resize-none overflow-hidden" 
+                className="resize-none overflow-hidden"
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor={`numeroDeFactura-${initialData.numeroDeFactura}`}>Nº de Factura</Label>
-              <Textarea 
-                id={`numeroDeFactura-${initialData.numeroDeFactura}`} 
-                value={data.numeroDeFactura} 
+              <Textarea
+                id={`numeroDeFactura-${initialData.numeroDeFactura}`}
+                value={data.numeroDeFactura}
                 onChange={(e) => handleHeaderChange('numeroDeFactura', e.target.value)}
                 onBlur={handlePersistChanges}
                 onInput={handleTextareaInput}
                 rows={1}
-                className="resize-none overflow-hidden" 
-               />
+                className="resize-none overflow-hidden"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor={`fechaDeEmision-${initialData.numeroDeFactura}`}>Fecha de Emisión</Label>
-              <Textarea 
-                id={`fechaDeEmision-${initialData.numeroDeFactura}`} 
-                value={data.fechaDeEmision} 
-                onChange={(e) => handleHeaderChange('fechaDeEmision', e.target.value)} 
+              <Textarea
+                id={`fechaDeEmision-${initialData.numeroDeFactura}`}
+                value={data.fechaDeEmision}
+                onChange={(e) => handleHeaderChange('fechaDeEmision', e.target.value)}
                 onBlur={handlePersistChanges}
                 onInput={handleTextareaInput}
                 rows={1}
-                className="resize-none overflow-hidden" 
+                className="resize-none overflow-hidden"
               />
             </div>
           </div>
@@ -366,31 +388,32 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
                                 checked={!!product[col.key]}
                                 onCheckedChange={(checked) => {
                                   handleProductChange(rowIndex, col.key, !!checked);
+                                  // Persist immediately for checkboxes since there's no blur event
+                                  setTimeout(() => onDataChange({ ...data, productos: data.productos.map((p, i) => i === rowIndex ? { ...p, [col.key]: !!checked } : p) }), 0);
                                 }}
-                                onBlur={handlePersistChanges}
                               />
                             </div>
                           </TableCell>
                         )
                       }
-                      
+
                       const fieldKey = col.key as keyof typeof keyMap;
                       const errorKey = `products.${rowIndex}.${keyMap[fieldKey]}`;
                       const error = errorMap[errorKey];
-                      
+
                       return (
                         <TableCell key={col.key} className="p-0 align-top">
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <div className="relative h-full">
                                 <Textarea
-                                  value={(product[col.key] as string || '').toString()}
+                                  value={String(product[col.key] ?? '')}
                                   onChange={(e) => handleProductChange(rowIndex, col.key, e.target.value)}
                                   onBlur={handlePersistChanges}
                                   onInput={handleTextareaInput}
                                   rows={1}
                                   className={cn(
-                                    "w-full bg-transparent border-0 rounded-none p-2 h-full focus:ring-1 focus:ring-blue-500 focus:bg-white text-xs resize-none overflow-hidden", 
+                                    "w-full bg-transparent border-0 rounded-none p-2 h-full focus:ring-1 focus:ring-blue-500 focus:bg-white text-xs resize-none overflow-hidden",
                                     error ? 'ring-1 ring-destructive' : ''
                                   )}
                                 />
@@ -409,22 +432,22 @@ export function DataTable({ initialData, initialValidationErrors, onDataChange }
           </div>
         </CardContent>
         <CardFooter className="flex justify-between items-end gap-4">
-            <div>
-              <Label htmlFor="pharmacy-select">Botica para el Reporte</Label>
-              <Select value={selectedPharmacy} onValueChange={setSelectedPharmacy}>
-                <SelectTrigger id="pharmacy-select" className="w-[280px] mt-2">
-                  <SelectValue placeholder="Seleccionar botica..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="BOTICA FARMA KIDS">BOTICA FARMA KIDS</SelectItem>
-                  <SelectItem value="BOTICA T-PHARMA">BOTICA T-PHARMA</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button onClick={generatePdf} className="bg-accent hover:bg-accent/90">
-                <Download className="mr-2 h-4 w-4" />
-                Generar PDF
-            </Button>
+          <div>
+            <Label htmlFor="pharmacy-select">Botica para el Reporte</Label>
+            <Select value={selectedPharmacy} onValueChange={setSelectedPharmacy}>
+              <SelectTrigger id="pharmacy-select" className="w-[280px] mt-2">
+                <SelectValue placeholder="Seleccionar botica..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="BOTICA FARMA KIDS">BOTICA FARMA KIDS</SelectItem>
+                <SelectItem value="BOTICA T-PHARMA">BOTICA T-PHARMA</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Button onClick={generatePdf} className="gap-2 shadow-sm">
+            <Download className="h-4 w-4" />
+            Generar PDF
+          </Button>
         </CardFooter>
       </Card>
     </TooltipProvider>
