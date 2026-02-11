@@ -1,7 +1,9 @@
-import {genkit} from 'genkit';
-import {googleAI} from '@genkit-ai/googleai';
+// src/ai/genkit.ts
+import { genkit } from 'genkit';
+import { googleAI } from '@genkit-ai/googleai';
 
 export const ai = genkit({
   plugins: [googleAI()],
-  model: 'googleai/gemini-2.0-flash',
+  // CORRECCIÓN: El ID correcto no es 'gemini-3.0', sino 'gemini-3-flash-preview'
+  model: 'googleai/gemini-3-flash-preview',
 });
