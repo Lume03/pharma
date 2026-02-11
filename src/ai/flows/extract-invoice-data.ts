@@ -8,7 +8,7 @@
  * - ExtractInvoiceDataOutput - El tipo de retorno para la función extractInvoiceData.
  */
 
-import { ai } from '@/ai/genkit';
+import { ai, withKeyRotation } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const ExtractInvoiceDataInputSchema = z.object({
@@ -49,14 +49,12 @@ const ExtractInvoiceDataOutputSchema = z.object({
 export type ExtractInvoiceDataOutput = z.infer<typeof ExtractInvoiceDataOutputSchema>;
 
 export async function extractInvoiceData(input: ExtractInvoiceDataInput): Promise<ExtractInvoiceDataOutput> {
-  return extractInvoiceDataFlow(input);
-}
-
-const extractInvoiceDataPrompt = ai.definePrompt({
-  name: 'extractInvoiceDataPrompt',
-  input: { schema: ExtractInvoiceDataInputSchema },
-  output: { schema: ExtractInvoiceDataOutputSchema },
-  prompt: `Eres un asistente de IA especializado en extraer datos de facturas farmacéuticas.
+  return withKeyRotation(async (aiInstance) => {
+    const prompt = aiInstance.definePrompt({
+      name: 'extractInvoiceDataPrompt',
+      input: { schema: ExtractInvoiceDataInputSchema },
+      output: { schema: ExtractInvoiceDataOutputSchema },
+      prompt: `Eres un asistente de IA especializado en extraer datos de facturas farmacéuticas.
 Tu tarea es procesar el documento PDF proporcionado, que puede contener una o varias facturas. Debes identificar cada factura individualmente y extraer la siguiente información para cada una.
 
 Para cada factura, extrae:
@@ -82,16 +80,9 @@ IMPORTANTE: Para cualquier campo que no puedas encontrar o extraer del documento
 
 Asegúrate de que la salida sea un único objeto JSON. Este objeto debe tener una clave llamada "invoices", que contenga un array. Cada elemento de este array será un objeto JSON que representa una factura individual extraída del PDF.
   `,
-});
+    });
 
-const extractInvoiceDataFlow = ai.defineFlow(
-  {
-    name: 'extractInvoiceDataFlow',
-    inputSchema: ExtractInvoiceDataInputSchema,
-    outputSchema: ExtractInvoiceDataOutputSchema,
-  },
-  async input => {
-    const { output } = await extractInvoiceDataPrompt(input);
+    const { output } = await prompt(input);
     return output!;
-  }
-);
+  });
+}

@@ -8,8 +8,8 @@
  * - ValidateExtractedDataOutput - El tipo de retorno para la función validateExtractedData.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { ai, withKeyRotation } from '@/ai/genkit';
+import { z } from 'genkit';
 
 const ValidateExtractedDataInputSchema = z.object({
   supplier: z.string().describe('El nombre del proveedor.'),
@@ -42,14 +42,12 @@ const ValidateExtractedDataOutputSchema = z.object({
 export type ValidateExtractedDataOutput = z.infer<typeof ValidateExtractedDataOutputSchema>;
 
 export async function validateExtractedData(input: ValidateExtractedDataInput): Promise<ValidateExtractedDataOutput> {
-  return validateExtractedDataFlow(input);
-}
-
-const validateExtractedDataPrompt = ai.definePrompt({
-  name: 'validateExtractedDataPrompt',
-  input: {schema: ValidateExtractedDataInputSchema},
-  output: {schema: ValidateExtractedDataOutputSchema},
-  prompt: `Eres un asistente de IA especializado en validar datos extraídos de facturas farmacéuticas. Recibirás datos extraídos de una factura y tu tarea es identificar cualquier posible error o información faltante. Proporciona una lista de errores de validación con el nombre del campo y un mensaje de error descriptivo.
+  return withKeyRotation(async (aiInstance) => {
+    const prompt = aiInstance.definePrompt({
+      name: 'validateExtractedDataPrompt',
+      input: { schema: ValidateExtractedDataInputSchema },
+      output: { schema: ValidateExtractedDataOutputSchema },
+      prompt: `Eres un asistente de IA especializado en validar datos extraídos de facturas farmacéuticas. Recibirás datos extraídos de una factura y tu tarea es identificar cualquier posible error o información faltante. Proporciona una lista de errores de validación con el nombre del campo y un mensaje de error descriptivo.
 
 Datos de la Factura:
 Proveedor: {{{supplier}}}
@@ -71,16 +69,9 @@ Cantidad Recibida: {{{quantityReceived}}}
 
 Formato de Salida: Un array de objetos JSON, donde cada objeto tiene una clave 'field' y 'message'. La clave 'field' indica el campo con el error, y la clave 'message' proporciona una descripción del error.
 `,
-});
+    });
 
-const validateExtractedDataFlow = ai.defineFlow(
-  {
-    name: 'validateExtractedDataFlow',
-    inputSchema: ValidateExtractedDataInputSchema,
-    outputSchema: ValidateExtractedDataOutputSchema,
-  },
-  async input => {
-    const {output} = await validateExtractedDataPrompt(input);
+    const { output } = await prompt(input);
     return output!;
-  }
-);
+  });
+}
